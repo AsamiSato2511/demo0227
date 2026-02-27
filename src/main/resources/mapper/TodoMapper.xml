@@ -11,10 +11,13 @@
         <result property="priority" column="priority"/>
         <result property="createdAt" column="created_at"/>
         <result property="deadline" column="deadline"/>
-        <association property="category" javaType="com.example.demo.model.Category">
-            <id property="id" column="category_id"/>
-            <result property="name" column="category_name"/>
-            <result property="color" column="category_color"/>
+        <association property="subject" javaType="com.example.demo.model.Subject">
+            <id property="id" column="subject_id"/>
+            <result property="fieldName" column="subject_field_name"/>
+            <result property="majorName" column="subject_major_name"/>
+            <result property="minorName" column="subject_minor_name"/>
+            <result property="color" column="subject_color"/>
+            <result property="understanding" column="subject_understanding"/>
         </association>
     </resultMap>
 
@@ -41,15 +44,20 @@
 
     <select id="findPage" resultMap="todoResultMap">
         SELECT t.id, t.title, t.completed, t.priority, t.deadline, t.created_at,
-               c.id AS category_id, c.name AS category_name, c.color AS category_color
+               s.id AS subject_id,
+               s.field_name AS subject_field_name,
+               s.major_name AS subject_major_name,
+               s.minor_name AS subject_minor_name,
+               s.color AS subject_color,
+               s.understanding AS subject_understanding
         FROM todos t
-        INNER JOIN category c ON c.id = t.category_id
+        INNER JOIN subjects s ON s.id = t.subject_id
         <where>
             <if test="keyword != null and keyword != ''">
                 t.title LIKE CONCAT('%', #{keyword}, '%')
             </if>
-            <if test="categoryId != null">
-                AND t.category_id = #{categoryId}
+            <if test="subjectId != null">
+                AND t.subject_id = #{subjectId}
             </if>
         </where>
         <include refid="orderByClause"/>
@@ -58,9 +66,14 @@
 
     <select id="findAllForExport" resultMap="todoResultMap">
         SELECT t.id, t.title, t.completed, t.priority, t.deadline, t.created_at,
-               c.id AS category_id, c.name AS category_name, c.color AS category_color
+               s.id AS subject_id,
+               s.field_name AS subject_field_name,
+               s.major_name AS subject_major_name,
+               s.minor_name AS subject_minor_name,
+               s.color AS subject_color,
+               s.understanding AS subject_understanding
         FROM todos t
-        INNER JOIN category c ON c.id = t.category_id
+        INNER JOIN subjects s ON s.id = t.subject_id
         ORDER BY t.created_at DESC
     </select>
 
@@ -71,23 +84,28 @@
             <if test="keyword != null and keyword != ''">
                 t.title LIKE CONCAT('%', #{keyword}, '%')
             </if>
-            <if test="categoryId != null">
-                AND t.category_id = #{categoryId}
+            <if test="subjectId != null">
+                AND t.subject_id = #{subjectId}
             </if>
         </where>
     </select>
 
     <select id="findById" parameterType="long" resultMap="todoResultMap">
         SELECT t.id, t.title, t.completed, t.priority, t.deadline, t.created_at,
-               c.id AS category_id, c.name AS category_name, c.color AS category_color
+               s.id AS subject_id,
+               s.field_name AS subject_field_name,
+               s.major_name AS subject_major_name,
+               s.minor_name AS subject_minor_name,
+               s.color AS subject_color,
+               s.understanding AS subject_understanding
         FROM todos t
-        INNER JOIN category c ON c.id = t.category_id
+        INNER JOIN subjects s ON s.id = t.subject_id
         WHERE t.id = #{id}
     </select>
 
     <insert id="insert" parameterType="Todo" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO todos (title, completed, priority, category_id, deadline)
-        VALUES (#{title}, COALESCE(#{completed}, FALSE), #{priority}, #{category.id}, #{deadline})
+        INSERT INTO todos (title, completed, priority, subject_id, deadline)
+        VALUES (#{title}, COALESCE(#{completed}, FALSE), #{priority}, #{subject.id}, #{deadline})
     </insert>
 
     <update id="update" parameterType="Todo">
@@ -95,7 +113,7 @@
         SET title = #{title},
             completed = #{completed},
             priority = #{priority},
-            category_id = #{category.id},
+            subject_id = #{subject.id},
             deadline = #{deadline}
         WHERE id = #{id}
     </update>

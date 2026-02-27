@@ -1,26 +1,24 @@
 package com.example.demo;
 
+import com.example.demo.form.TodoForm;
+import com.example.demo.model.Priority;
+import com.example.demo.model.Subject;
+import com.example.demo.model.Todo;
+import com.example.demo.service.SubjectService;
+import com.example.demo.service.TodoService;
+import jakarta.validation.Valid;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
-import java.util.List;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-
-import com.example.demo.form.TodoForm;
-import com.example.demo.model.Category;
-import com.example.demo.model.Priority;
-import com.example.demo.model.Todo;
-import jakarta.validation.Valid;
-import com.example.demo.service.CategoryService;
-import com.example.demo.service.TodoService;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -41,40 +39,38 @@ public class TodoController {
     private static final DateTimeFormatter FILE_DATE = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     private final TodoService todoService;
-    private final CategoryService categoryService;
+    private final SubjectService subjectService;
 
-    public TodoController(TodoService todoService, CategoryService categoryService) {
+    public TodoController(TodoService todoService, SubjectService subjectService) {
         this.todoService = todoService;
-        this.categoryService = categoryService;
+        this.subjectService = subjectService;
     }
 
     @GetMapping
     public String list(@RequestParam(value = "keyword", required = false) String keyword,
-                       @RequestParam(value = "categoryId", required = false) Long categoryId,
+                       @RequestParam(value = "subjectId", required = false) Long subjectId,
                        @RequestParam(value = "sort", required = false, defaultValue = "createdAt") String sort,
                        @RequestParam(value = "direction", required = false, defaultValue = "desc") String direction,
                        @PageableDefault(size = 10) Pageable pageable,
                        Model model) {
         String normalizedSort = normalizeSort(sort);
         String normalizedDirection = normalizeDirection(direction);
-        Page<Todo> todoPage = todoService.findPage(keyword, categoryId, normalizedSort, normalizedDirection, pageable);
-        List<Todo> todos = todoPage.getContent();
+        Page<Todo> todoPage = todoService.findPage(keyword, subjectId, normalizedSort, normalizedDirection, pageable);
         long totalElements = todoPage.getTotalElements();
         long start = totalElements == 0 ? 0 : pageable.getOffset() + 1;
         long end = totalElements == 0 ? 0 : Math.min(pageable.getOffset() + pageable.getPageSize(), totalElements);
 
-        model.addAttribute("categories", categoryService.findAll());
+        model.addAttribute("subjects", subjectService.findAll());
         model.addAttribute("keyword", keyword);
-        model.addAttribute("categoryId", categoryId);
+        model.addAttribute("subjectId", subjectId);
         model.addAttribute("sort", normalizedSort);
         model.addAttribute("direction", normalizedDirection);
-        model.addAttribute("page", todoPage);
         model.addAttribute("currentPage", todoPage.getNumber());
         model.addAttribute("totalPages", todoPage.getTotalPages());
         model.addAttribute("totalElements", totalElements);
         model.addAttribute("startItem", start);
         model.addAttribute("endItem", end);
-        model.addAttribute("todos", todos);
+        model.addAttribute("todos", todoPage.getContent());
         return "todo/list";
     }
 
@@ -82,26 +78,14 @@ public class TodoController {
     public String newForm(Model model) {
         if (!model.containsAttribute("todoForm")) {
             TodoForm todoForm = new TodoForm();
-            List<Category> categories = categoryService.findAll();
-            if (!categories.isEmpty()) {
-                todoForm.setCategoryId(categories.get(0).getId());
+            List<Subject> subjects = subjectService.findAll();
+            if (!subjects.isEmpty()) {
+                todoForm.setSubjectId(subjects.get(0).getId());
             }
             model.addAttribute("todoForm", todoForm);
         }
-        model.addAttribute("categories", categoryService.findAll());
+        model.addAttribute("subjects", subjectService.findAll());
         return "todo/form";
-    }
-
-    @GetMapping("/{id}/edit")
-    public String editForm(@PathVariable("id") Long id, Model model, RedirectAttributes redirectAttributes) {
-        Todo todo = todoService.findById(id);
-        if (todo == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "\u0054\u006f\u0044\u006f\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093");
-            return "redirect:/todo";
-        }
-        model.addAttribute("categories", categoryService.findAll());
-        model.addAttribute("todo", todo);
-        return "todo/edit";
     }
 
     @PostMapping("/confirm")
@@ -109,13 +93,13 @@ public class TodoController {
                           BindingResult bindingResult,
                           Model model) {
         if (bindingResult.hasErrors()) {
-            model.addAttribute("categories", categoryService.findAll());
+            model.addAttribute("subjects", subjectService.findAll());
             return "todo/form";
         }
-        model.addAttribute("pageTitle", "\u767B\u9332\u5185\u5BB9\u306E\u78BA\u8A8D");
-        model.addAttribute("registerLabel", "\u767B\u9332");
-        model.addAttribute("backLabel", "\u623B\u308B");
-        model.addAttribute("selectedCategory", categoryService.findById(todoForm.getCategoryId()));
+        model.addAttribute("pageTitle", "登録内容の確認");
+        model.addAttribute("registerLabel", "登録");
+        model.addAttribute("backLabel", "戻る");
+        model.addAttribute("selectedSubject", subjectService.findById(todoForm.getSubjectId()));
         return "todo/confirm";
     }
 
@@ -125,24 +109,36 @@ public class TodoController {
         todo.setTitle(todoForm.getTitle());
         todo.setCompleted(Boolean.FALSE);
         todo.setPriority(todoForm.getPriority() != null ? todoForm.getPriority() : Priority.MEDIUM);
-        Category category = new Category();
-        category.setId(todoForm.getCategoryId());
-        todo.setCategory(category);
+        Subject subject = new Subject();
+        subject.setId(todoForm.getSubjectId());
+        todo.setSubject(subject);
         todo.setDeadline(todoForm.getDeadline());
         todoService.insert(todo);
         return "redirect:/todo";
+    }
+
+    @GetMapping("/{id}/edit")
+    public String editForm(@PathVariable("id") Long id, Model model, RedirectAttributes redirectAttributes) {
+        Todo todo = todoService.findById(id);
+        if (todo == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "ToDoが見つかりません");
+            return "redirect:/todo";
+        }
+        model.addAttribute("subjects", subjectService.findAll());
+        model.addAttribute("todo", todo);
+        return "todo/edit";
     }
 
     @PostMapping("/{id}/update")
     public String update(@PathVariable("id") Long id,
                          @RequestParam("title") String title,
                          @RequestParam("priority") Priority priority,
-                         @RequestParam("categoryId") Long categoryId,
+                         @RequestParam("subjectId") Long subjectId,
                          @RequestParam(value = "deadline", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate deadline,
                          RedirectAttributes redirectAttributes) {
         Todo existing = todoService.findById(id);
         if (existing == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "\u66F4\u65B0\u306B\u5931\u6557\u3057\u307E\u3057\u305F");
+            redirectAttributes.addFlashAttribute("errorMessage", "更新に失敗しました");
             return "redirect:/todo";
         }
 
@@ -151,32 +147,22 @@ public class TodoController {
         todo.setTitle(title);
         todo.setCompleted(existing.getCompleted() != null ? existing.getCompleted() : Boolean.FALSE);
         todo.setPriority(priority != null ? priority : Priority.MEDIUM);
-        Category category = new Category();
-        category.setId(categoryId);
-        todo.setCategory(category);
+        Subject subject = new Subject();
+        subject.setId(subjectId);
+        todo.setSubject(subject);
         todo.setDeadline(deadline);
 
         boolean updated = todoService.update(todo);
-        if (updated) {
-            redirectAttributes.addFlashAttribute("successMessage", "\u66F4\u65B0\u304C\u5B8C\u4E86\u3057\u307E\u3057\u305F");
-        } else {
-            redirectAttributes.addFlashAttribute("errorMessage", "\u66F4\u65B0\u306B\u5931\u6557\u3057\u307E\u3057\u305F");
-        }
+        redirectAttributes.addFlashAttribute(updated ? "successMessage" : "errorMessage",
+                updated ? "更新が完了しました" : "更新に失敗しました");
         return "redirect:/todo";
     }
 
     @DeleteMapping("/{id}")
     public String delete(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
-        try {
-            boolean deleted = todoService.deleteById(id);
-            if (deleted) {
-                redirectAttributes.addFlashAttribute("successMessage", "\u0054\u006f\u0044\u006f\u3092\u524a\u9664\u3057\u307e\u3057\u305f");
-            } else {
-                redirectAttributes.addFlashAttribute("errorMessage", "\u524a\u9664\u306b\u5931\u6557\u3057\u307e\u3057\u305f");
-            }
-        } catch (RuntimeException ex) {
-            redirectAttributes.addFlashAttribute("errorMessage", "\u524a\u9664\u306b\u5931\u6557\u3057\u307e\u3057\u305f");
-        }
+        boolean deleted = todoService.deleteById(id);
+        redirectAttributes.addFlashAttribute(deleted ? "successMessage" : "errorMessage",
+                deleted ? "ToDoを削除しました" : "削除に失敗しました");
         return "redirect:/todo";
     }
 
@@ -192,16 +178,16 @@ public class TodoController {
             redirectAttributes.addFlashAttribute("errorMessage", "削除するToDoを選択してください");
             return "redirect:/todo";
         }
-
-        List<Long> targetIds = ids.stream()
-                .map(Integer::longValue)
-                .toList();
+        List<Long> targetIds = ids.stream().map(Integer::longValue).toList();
         int deletedCount = todoService.deleteByIds(targetIds);
-        if (deletedCount > 0) {
-            redirectAttributes.addFlashAttribute("successMessage", deletedCount + "件のToDoを削除しました");
-        } else {
-            redirectAttributes.addFlashAttribute("errorMessage", "削除に失敗しました");
-        }
+        redirectAttributes.addFlashAttribute(deletedCount > 0 ? "successMessage" : "errorMessage",
+                deletedCount > 0 ? deletedCount + "件のToDoを削除しました" : "削除に失敗しました");
+        return "redirect:/todo";
+    }
+
+    @PostMapping("/{id}/toggle")
+    public String toggle(@PathVariable("id") Long id) {
+        todoService.toggleCompleted(id);
         return "redirect:/todo";
     }
 
@@ -223,12 +209,6 @@ public class TodoController {
         return ResponseEntity.ok().headers(headers).body(out.toByteArray());
     }
 
-    @PostMapping("/{id}/toggle")
-    public String toggle(@PathVariable("id") Long id) {
-        todoService.toggleCompleted(id);
-        return "redirect:/todo";
-    }
-
     private String normalizeSort(String sort) {
         return switch (sort) {
             case "title", "completed", "priority", "deadline" -> sort;
@@ -242,16 +222,18 @@ public class TodoController {
 
     private String buildCsv(List<Todo> todos) {
         StringBuilder sb = new StringBuilder();
-        sb.append("ID,タイトル,登録者,ステータス,作成日").append("\r\n");
+        sb.append("ID,タイトル,分野,ステータス,作成日").append("\r\n");
         for (Todo todo : todos) {
             String id = todo.getId() != null ? String.valueOf(todo.getId()) : "";
             String title = todo.getTitle() != null ? todo.getTitle() : "";
-            String author = "-";
+            String subjectName = todo.getSubject() != null
+                    ? formatSubject(todo.getSubject().getFieldName(), todo.getSubject().getMajorName(), todo.getSubject().getMinorName())
+                    : "-";
             String status = Boolean.TRUE.equals(todo.getCompleted()) ? "完了" : "未完了";
             String createdAt = todo.getCreatedAt() != null ? todo.getCreatedAt().format(CSV_DATE_TIME) : "";
             sb.append(escapeCsv(id)).append(',')
                     .append(escapeCsv(title)).append(',')
-                    .append(escapeCsv(author)).append(',')
+                    .append(escapeCsv(subjectName)).append(',')
                     .append(escapeCsv(status)).append(',')
                     .append(escapeCsv(createdAt))
                     .append("\r\n");
@@ -262,5 +244,12 @@ public class TodoController {
     private String escapeCsv(String value) {
         String escaped = value.replace("\"", "\"\"");
         return "\"" + escaped + "\"";
+    }
+
+    private String formatSubject(String fieldName, String majorName, String minorName) {
+        return String.join(" / ",
+                fieldName != null ? fieldName : "-",
+                majorName != null ? majorName : "-",
+                minorName != null ? minorName : "-");
     }
 }

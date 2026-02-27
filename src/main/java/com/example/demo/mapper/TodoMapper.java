@@ -8,7 +8,7 @@ import org.apache.ibatis.annotations.Param;
 public interface TodoMapper {
 
     List<Todo> findPage(@Param("keyword") String keyword,
-                        @Param("categoryId") Long categoryId,
+                        @Param("subjectId") Long subjectId,
                         @Param("sort") String sort,
                         @Param("direction") String direction,
                         @Param("limit") int limit,
@@ -16,7 +16,7 @@ public interface TodoMapper {
 
     List<Todo> findAllForExport();
 
-    long countByConditions(@Param("keyword") String keyword, @Param("categoryId") Long categoryId);
+    long countByConditions(@Param("keyword") String keyword, @Param("subjectId") Long subjectId);
 
     Todo findById(Long id);
 

@@ -25,8 +25,8 @@ public class TodoForm {
     @NotNull(message = "Priority is required")
     private Priority priority = Priority.MEDIUM;
 
-    @NotNull(message = "Category is required")
-    private Long categoryId;
+    @NotNull(message = "Subject is required")
+    private Long subjectId;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate deadline;

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demo.mapper.ExamResultMapper">
+
+    <select id="findRecent" resultType="ExamResult">
+        SELECT id, taken_on, source, score_total, memo, created_at
+        FROM exam_results
+        ORDER BY taken_on DESC, id DESC
+        LIMIT #{limit}
+    </select>
+
+    <insert id="insert" parameterType="ExamResult" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO exam_results (taken_on, source, score_total, memo)
+        VALUES (#{takenOn}, #{source}, #{scoreTotal}, #{memo})
+    </insert>
+
+    <select id="findStats" resultType="map">
+        SELECT COALESCE(AVG(score_total), 0) AS avgScore,
+               COALESCE(MAX(score_total), 0) AS maxScore,
+               COALESCE(MIN(score_total), 0) AS minScore
+        FROM exam_results
+    </select>
+
+</mapper>

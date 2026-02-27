@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demo.mapper.QuestionAttemptMapper">
+
+    <insert id="insertBatch">
+        INSERT INTO question_attempts (
+            attempted_on, correct, field_name, major_name, minor_name, source_label, source_url, import_batch_id
+        )
+        VALUES
+        <foreach collection="items" item="item" separator=",">
+            (
+            #{item.attemptedOn},
+            #{item.correct},
+            #{item.fieldName},
+            #{item.majorName},
+            #{item.minorName},
+            #{item.sourceLabel},
+            #{item.sourceUrl},
+            #{item.importBatchId}
+            )
+        </foreach>
+    </insert>
+
+    <select id="findFieldRates" resultType="com.example.demo.model.CorrectRateSummary">
+        SELECT field_name AS name,
+               COUNT(*) AS total_count,
+               SUM(CASE WHEN correct THEN 1 ELSE 0 END) AS correct_count,
+               ROUND(100.0 * SUM(CASE WHEN correct THEN 1 ELSE 0 END) / COUNT(*), 1) AS correct_rate
+        FROM question_attempts
+        <where>
+            <if test="fromDate != null">
+                attempted_on &gt;= #{fromDate}
+            </if>
+        </where>
+        GROUP BY field_name
+        ORDER BY correct_rate DESC, total_count DESC
+    </select>
+
+    <select id="findMinorRates" resultType="com.example.demo.model.CorrectRateSummary">
+        SELECT minor_name AS name,
+               COUNT(*) AS total_count,
+               SUM(CASE WHEN correct THEN 1 ELSE 0 END) AS correct_count,
+               ROUND(100.0 * SUM(CASE WHEN correct THEN 1 ELSE 0 END) / COUNT(*), 1) AS correct_rate
+        FROM question_attempts
+        <where>
+            <if test="fromDate != null">
+                attempted_on &gt;= #{fromDate}
+            </if>
+        </where>
+        GROUP BY minor_name
+        ORDER BY correct_rate DESC, total_count DESC
+    </select>
+
+    <select id="findCategoryRates" resultType="com.example.demo.model.CategoryRateRow">
+        SELECT field_name,
+               major_name,
+               minor_name,
+               COUNT(*) AS total_count,
+               SUM(CASE WHEN correct THEN 1 ELSE 0 END) AS correct_count,
+               ROUND(100.0 * SUM(CASE WHEN correct THEN 1 ELSE 0 END) / COUNT(*), 1) AS correct_rate
+        FROM question_attempts
+        <where>
+            <if test="fromDate != null">
+                attempted_on &gt;= #{fromDate}
+            </if>
+        </where>
+        GROUP BY field_name, major_name, minor_name
+    </select>
+
+    <select id="findWorstMinorRates" resultType="com.example.demo.model.CorrectRateSummary">
+        SELECT minor_name AS name,
+               COUNT(*) AS total_count,
+               SUM(CASE WHEN correct THEN 1 ELSE 0 END) AS correct_count,
+               ROUND(100.0 * SUM(CASE WHEN correct THEN 1 ELSE 0 END) / COUNT(*), 1) AS correct_rate
+        FROM question_attempts
+        <where>
+            <if test="fromDate != null">
+                attempted_on &gt;= #{fromDate}
+            </if>
+        </where>
+        GROUP BY minor_name
+        ORDER BY correct_rate ASC, total_count DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="findRecent" resultType="QuestionAttempt">
+        SELECT id, attempted_on, correct, field_name, major_name, minor_name,
+               source_label, source_url, import_batch_id, created_at
+        FROM question_attempts
+        <where>
+            <if test="fromDate != null">
+                attempted_on &gt;= #{fromDate}
+            </if>
+        </where>
+        ORDER BY attempted_on DESC, id DESC
+        LIMIT #{limit}
+    </select>
+
+</mapper>

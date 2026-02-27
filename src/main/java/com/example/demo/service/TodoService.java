@@ -18,9 +18,9 @@ public class TodoService {
         this.todoMapper = todoMapper;
     }
 
-    public Page<Todo> findPage(String keyword, Long categoryId, String sort, String direction, Pageable pageable) {
-        long total = todoMapper.countByConditions(keyword, categoryId);
-        List<Todo> content = todoMapper.findPage(keyword, categoryId, sort, direction, pageable.getPageSize(), pageable.getOffset());
+    public Page<Todo> findPage(String keyword, Long subjectId, String sort, String direction, Pageable pageable) {
+        long total = todoMapper.countByConditions(keyword, subjectId);
+        List<Todo> content = todoMapper.findPage(keyword, subjectId, sort, direction, pageable.getPageSize(), pageable.getOffset());
         return new PageImpl<>(content, pageable, total);
     }
 

@@ -16,13 +16,9 @@ public class Todo {
     private String title;
     private Boolean completed;
     private Priority priority;
-    private Category category;
+    private Subject subject;
     private LocalDate deadline;
     private LocalDateTime createdAt;
-
-    public boolean isCompleted() {
-        return Boolean.TRUE.equals(completed);
-    }
 
     public boolean isOverdue() {
         return deadline != null && deadline.isBefore(LocalDate.now());

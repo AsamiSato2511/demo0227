@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ITパスポート受検管理表</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+</head>
+<body>
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0">ITパスポート受検管理表</h1>
+        <a class="btn btn-outline-dark" th:href="@{/todo}">学習タスクへ</a>
+    </div>
+
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show js-auto-dismiss" role="alert">
+        <span th:text="${successMessage}">success</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show js-auto-dismiss" role="alert">
+        <span th:text="${errorMessage}">error</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="h5">試験日</h2>
+            <p class="mb-1">試験日: <strong th:text="${examDate != null ? #temporals.format(examDate, 'yyyy-MM-dd') : '-'}">2026-04-01</strong></p>
+            <p class="mb-3 text-primary fw-semibold" th:text="${countdownMessage}">試験まであと30日</p>
+            <form th:action="@{/study/exam-date}" th:object="${examSettingForm}" method="post" class="row g-2 align-items-end">
+                <div class="col-auto">
+                    <label for="examDate" class="form-label">試験日を変更</label>
+                    <input id="examDate" type="date" th:field="*{examDate}" class="form-control">
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary">更新</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="h5">CSVアップロード</h2>
+            <p class="text-muted small mb-3">形式: No,正誤,分野名,大分類,中分類,出典(HYPERLINK),学習日</p>
+            <form th:action="@{/study/import}" method="post" enctype="multipart/form-data" class="row g-2 align-items-end">
+                <div class="col-12 col-md-8">
+                    <label for="file" class="form-label">CSVファイル</label>
+                    <input id="file" type="file" name="file" class="form-control" accept=".csv" required>
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-success">取り込み</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <span class="text-muted small">集計期間:</span>
+        <a class="btn btn-sm" th:classappend="${period == 'all'} ? ' btn-primary' : ' btn-outline-primary'" th:href="@{/study(period='all')}">全期間</a>
+        <a class="btn btn-sm" th:classappend="${period == '30d'} ? ' btn-primary' : ' btn-outline-primary'" th:href="@{/study(period='30d')}">直近30日</a>
+        <a class="btn btn-sm" th:classappend="${period == '7d'} ? ' btn-primary' : ' btn-outline-primary'" th:href="@{/study(period='7d')}">直近7日</a>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h5 mb-0">分野別理解度</h2>
+                <span class="badge text-bg-info">平均理解度: <span th:text="${#numbers.formatDecimal(averageUnderstanding, 1, 1)}">0.0</span>%</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-striped align-middle mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th>分野</th>
+                        <th>大分類</th>
+                        <th>中分類</th>
+                        <th style="width: 220px;">理解度</th>
+                        <th style="width: 220px;">更新</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="subject : ${subjects}">
+                        <td>
+                            <span class="badge me-2" th:style="'background-color:' + ${subject.color} + ';color:#fff;'">&nbsp;</span>
+                            <span th:text="${subject.fieldName}">分野</span>
+                        </td>
+                        <td th:text="${subject.majorName}">大分類</td>
+                        <td th:text="${subject.minorName}">中分類</td>
+                        <td>
+                            <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100"
+                                 th:attr="aria-valuenow=${subject.understanding}">
+                                <div class="progress-bar" th:style="'width:' + ${subject.understanding} + '%;'"
+                                     th:text="${subject.understanding + '%'}">0%</div>
+                            </div>
+                        </td>
+                        <td>
+                            <form th:action="@{/study/subjects/{id}/understanding(id=${subject.id})}" method="post" class="d-flex gap-2">
+                                <input type="number" name="understanding" min="0" max="100" class="form-control form-control-sm"
+                                       th:value="${subject.understanding}">
+                                <button type="submit" class="btn btn-sm btn-outline-primary">保存</button>
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-12 col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h2 class="h5 mb-3">分野別正答率</h2>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th>分野</th>
+                                <th class="text-end">正答率</th>
+                                <th class="text-end">正解/総数</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:if="${#lists.isEmpty(fieldRates)}">
+                                <td colspan="3" class="text-center text-muted">データなし</td>
+                            </tr>
+                            <tr th:each="rate : ${fieldRates}">
+                                <td th:text="${rate.name}">分野</td>
+                                <td class="text-end" th:text="${rate.correctRate + '%'}">0%</td>
+                                <td class="text-end" th:text="${rate.correctCount + '/' + rate.totalCount}">0/0</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h2 class="h5 mb-3">中分類別正答率（ワーストTOP5）</h2>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th>中分類</th>
+                                <th class="text-end">正答率</th>
+                                <th class="text-end">正解/総数</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:if="${#lists.isEmpty(worstMinorRates)}">
+                                <td colspan="3" class="text-center text-muted">データなし</td>
+                            </tr>
+                            <tr th:each="rate : ${worstMinorRates}">
+                                <td th:text="${rate.name}">中分類</td>
+                                <td class="text-end text-danger fw-semibold" th:text="${rate.correctRate + '%'}">0%</td>
+                                <td class="text-end" th:text="${rate.correctCount + '/' + rate.totalCount}">0/0</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mt-4">
+        <div class="card-body">
+            <h2 class="h5 mb-3">中分類別正答率（全体）</h2>
+            <div class="table-responsive mb-4">
+                <table class="table table-striped table-sm mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th>中分類</th>
+                        <th class="text-end">正答率</th>
+                        <th class="text-end">正解/総数</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(minorRates)}">
+                        <td colspan="3" class="text-center text-muted">データなし</td>
+                    </tr>
+                    <tr th:each="rate : ${minorRates}">
+                        <td th:text="${rate.name}">中分類</td>
+                        <td class="text-end" th:text="${rate.correctRate + '%'}">0%</td>
+                        <td class="text-end" th:text="${rate.correctCount + '/' + rate.totalCount}">0/0</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h2 class="h5 mb-3">直近の解答履歴</h2>
+            <div class="table-responsive">
+                <table class="table table-striped table-sm mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th>学習日</th>
+                        <th>正誤</th>
+                        <th>分野</th>
+                        <th>大分類</th>
+                        <th>中分類</th>
+                        <th>出典</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(recentAttempts)}">
+                        <td colspan="6" class="text-center text-muted">データなし</td>
+                    </tr>
+                    <tr th:each="row : ${recentAttempts}">
+                        <td th:text="${#temporals.format(row.attemptedOn, 'yyyy-MM-dd')}">2026-02-27</td>
+                        <td><span class="badge" th:classappend="${row.correct} ? ' text-bg-success' : ' text-bg-danger'" th:text="${row.correct} ? '○' : '×'">○</span></td>
+                        <td th:text="${row.fieldName}">分野</td>
+                        <td th:text="${row.majorName}">大分類</td>
+                        <td th:text="${row.minorName}">中分類</td>
+                        <td>
+                            <a th:if="${row.sourceUrl != null and !#strings.isEmpty(row.sourceUrl)}" th:href="${row.sourceUrl}" target="_blank" rel="noopener"
+                               th:text="${row.sourceLabel != null and !#strings.isEmpty(row.sourceLabel) ? row.sourceLabel : row.sourceUrl}">link</a>
+                            <span th:unless="${row.sourceUrl != null and !#strings.isEmpty(row.sourceUrl)}" th:text="${row.sourceLabel}">-</span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script>
+    document.querySelectorAll(".js-auto-dismiss").forEach(function (alertElement) {
+        setTimeout(function () {
+            var alertInstance = bootstrap.Alert.getOrCreateInstance(alertElement);
+            alertInstance.close();
+        }, 3000);
+    });
+</script>
+</body>
+</html>
