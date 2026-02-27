@@ -36,9 +36,15 @@
                 <tbody>
                 <tr th:each="todo : ${todos}">
                     <td class="px-3" th:text="${todo.id}">1</td>
-                    <td th:text="${todo.title}">Sample Task</td>
+                    <td th:text="${todo.title}" th:classappend="${todo.completed} ? ' text-decoration-line-through text-muted' : ''">Sample Task</td>
                     <td th:text="${todo.completed} ? '完了' : '未完了'">未完了</td>
                     <td class="text-center">
+                        <form th:action="@{/todo/{id}/toggle(id=${todo.id})}" method="post" class="d-inline me-1">
+                            <button type="submit" class="btn btn-outline-success btn-sm"
+                                    th:text="${todo.completed} ? '未完了に戻す' : '完了にする'">完了にする</button>
+                        </form>
+                        <a class="btn btn-outline-primary btn-sm me-1"
+                           th:href="@{/todo/{id}/edit(id=${todo.id})}">編集</a>
                         <form th:action="@{/todo/{id}/delete(id=${todo.id})}" method="post" class="d-inline"
                               onsubmit="return confirm('本当に削除しますか？');">
                             <button type="submit" class="btn btn-danger btn-sm">削除</button>

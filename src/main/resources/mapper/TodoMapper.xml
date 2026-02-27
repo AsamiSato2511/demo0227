@@ -10,10 +10,23 @@
         ORDER BY id DESC
     </select>
 
+    <select id="findById" parameterType="long" resultType="Todo">
+        SELECT id, title, completed
+        FROM todos
+        WHERE id = #{id}
+    </select>
+
     <insert id="insert" parameterType="Todo" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO todos (title, completed)
         VALUES (#{title}, COALESCE(#{completed}, FALSE))
     </insert>
+
+    <update id="update" parameterType="Todo">
+        UPDATE todos
+        SET title = #{title},
+            completed = #{completed}
+        WHERE id = #{id}
+    </update>
 
     <delete id="deleteById" parameterType="long">
         DELETE FROM todos
