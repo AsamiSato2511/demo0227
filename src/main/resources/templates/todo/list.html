@@ -8,6 +8,15 @@
 </head>
 <body>
 <div class="container py-4">
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show js-auto-dismiss" role="alert">
+        <span th:text="${successMessage}">ToDoを削除しました</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show js-auto-dismiss" role="alert">
+        <span th:text="${errorMessage}">削除に失敗しました</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="h3 mb-0">ToDo一覧</h1>
         <a class="btn btn-primary" th:href="@{/todo/new}">新規登録</a>
@@ -21,6 +30,7 @@
                     <th scope="col" class="px-3">ID</th>
                     <th scope="col">タイトル</th>
                     <th scope="col">完了状態</th>
+                    <th scope="col" class="text-center">操作</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -28,6 +38,12 @@
                     <td class="px-3" th:text="${todo.id}">1</td>
                     <td th:text="${todo.title}">Sample Task</td>
                     <td th:text="${todo.completed} ? '完了' : '未完了'">未完了</td>
+                    <td class="text-center">
+                        <form th:action="@{/todo/{id}/delete(id=${todo.id})}" method="post" class="d-inline"
+                              onsubmit="return confirm('本当に削除しますか？');">
+                            <button type="submit" class="btn btn-danger btn-sm">削除</button>
+                        </form>
+                    </td>
                 </tr>
                 </tbody>
             </table>
@@ -43,5 +59,13 @@
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script>
+    document.querySelectorAll(".js-auto-dismiss").forEach(function (alertElement) {
+        setTimeout(function () {
+            var alertInstance = bootstrap.Alert.getOrCreateInstance(alertElement);
+            alertInstance.close();
+        }, 3000);
+    });
+</script>
 </body>
 </html>

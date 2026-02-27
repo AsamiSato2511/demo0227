@@ -15,4 +15,9 @@
         VALUES (#{title}, COALESCE(#{completed}, FALSE))
     </insert>
 
+    <delete id="deleteById" parameterType="long">
+        DELETE FROM todos
+        WHERE id = #{id}
+    </delete>
+
 </mapper>
