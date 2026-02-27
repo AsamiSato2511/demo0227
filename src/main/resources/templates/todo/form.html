@@ -14,10 +14,23 @@
                 <div class="card-body p-4">
                     <h1 class="h4 mb-4">Create Todo</h1>
 
-                    <form th:action="@{/todo/confirm}" method="post">
+                    <form th:action="@{/todo/confirm}" th:object="${todoForm}" method="post">
+                        <div class="mb-3">
+                            <label for="author" class="form-label">Author</label>
+                            <input type="text" id="author" th:field="*{author}" class="form-control" placeholder="Enter author">
+                            <p class="text-danger small mt-1 mb-0" th:if="${#fields.hasErrors('author')}" th:errors="*{author}">Author error</p>
+                        </div>
+
                         <div class="mb-4">
                             <label for="title" class="form-label">Title</label>
-                            <input type="text" id="title" name="title" class="form-control" placeholder="Enter todo title" required>
+                            <input type="text" id="title" th:field="*{title}" class="form-control" placeholder="Enter todo title">
+                            <p class="text-danger small mt-1 mb-0" th:if="${#fields.hasErrors('title')}" th:errors="*{title}">Title error</p>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="detail" class="form-label">Detail</label>
+                            <textarea id="detail" th:field="*{detail}" class="form-control" rows="4" placeholder="Enter detail (optional)"></textarea>
+                            <p class="text-danger small mt-1 mb-0" th:if="${#fields.hasErrors('detail')}" th:errors="*{detail}">Detail error</p>
                         </div>
 
                         <div class="d-flex gap-2">

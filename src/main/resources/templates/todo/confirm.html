@@ -15,13 +15,19 @@
             <div class="card shadow-sm mb-4">
                 <div class="card-header">Confirmation</div>
                 <div class="card-body">
+                    <h2 class="h6 text-muted mb-2">Author</h2>
+                    <p class="mb-3" th:text="${todoForm.author}">Sample Author</p>
                     <h2 class="h6 text-muted mb-2">Title</h2>
-                    <p class="mb-0" th:text="${todoTitle}">Sample Task</p>
+                    <p class="mb-3" th:text="${todoForm.title}">Sample Task</p>
+                    <h2 class="h6 text-muted mb-2">Detail</h2>
+                    <p class="mb-0" th:text="${todoForm.detail}">Sample Detail</p>
                 </div>
             </div>
 
             <form th:action="@{/todo/complete}" method="post">
-                <input type="hidden" name="title" th:value="${todoTitle}">
+                <input type="hidden" name="author" th:value="${todoForm.author}">
+                <input type="hidden" name="title" th:value="${todoForm.title}">
+                <input type="hidden" name="detail" th:value="${todoForm.detail}">
                 <div class="d-flex gap-2">
                     <button type="button" class="btn btn-outline-secondary" onclick="history.back()" th:text="${backLabel}">Back</button>
                     <button type="submit" class="btn btn-success" th:text="${registerLabel}">Register</button>

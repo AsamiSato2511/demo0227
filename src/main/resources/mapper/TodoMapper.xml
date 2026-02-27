@@ -4,14 +4,34 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.demo.mapper.TodoMapper">
 
+    <sql id="orderByClause">
+        ORDER BY
+        <choose>
+            <when test="sort == 'title'">title</when>
+            <when test="sort == 'completed'">completed</when>
+            <otherwise>created_at</otherwise>
+        </choose>
+        <choose>
+            <when test="direction == 'asc'">ASC</when>
+            <otherwise>DESC</otherwise>
+        </choose>
+    </sql>
+
     <select id="findAll" resultType="Todo">
-        SELECT id, title, completed
+        SELECT id, title, completed, created_at
         FROM todos
-        ORDER BY id DESC
+        <include refid="orderByClause"/>
+    </select>
+
+    <select id="searchByTitle" resultType="Todo">
+        SELECT id, title, completed, created_at
+        FROM todos
+        WHERE title LIKE CONCAT('%', #{keyword}, '%')
+        <include refid="orderByClause"/>
     </select>
 
     <select id="findById" parameterType="long" resultType="Todo">
-        SELECT id, title, completed
+        SELECT id, title, completed, created_at
         FROM todos
         WHERE id = #{id}
     </select>

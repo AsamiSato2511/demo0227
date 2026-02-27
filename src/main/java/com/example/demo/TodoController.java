@@ -2,11 +2,16 @@ package com.example.demo;
 
 import java.util.List;
 
+import com.example.demo.form.TodoForm;
 import com.example.demo.model.Todo;
+import jakarta.validation.Valid;
 import com.example.demo.service.TodoService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,14 +29,32 @@ public class TodoController {
     }
 
     @GetMapping
-    public String list(Model model) {
-        List<Todo> todos = todoService.findAll();
+    public String list(@RequestParam(value = "keyword", required = false) String keyword,
+                       @RequestParam(value = "sort", required = false, defaultValue = "createdAt") String sort,
+                       @RequestParam(value = "direction", required = false, defaultValue = "desc") String direction,
+                       Model model) {
+        String normalizedSort = normalizeSort(sort);
+        String normalizedDirection = normalizeDirection(direction);
+        List<Todo> todos;
+        if (keyword != null && !keyword.isBlank()) {
+            todos = todoService.searchByTitle(keyword, normalizedSort, normalizedDirection);
+        } else {
+            todos = todoService.findAll(normalizedSort, normalizedDirection);
+        }
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("sort", normalizedSort);
+        model.addAttribute("direction", normalizedDirection);
+        model.addAttribute("nextDirection", "asc".equals(normalizedDirection) ? "desc" : "asc");
+        model.addAttribute("resultCount", todos.size());
         model.addAttribute("todos", todos);
         return "todo/list";
     }
 
     @GetMapping("/new")
-    public String newForm() {
+    public String newForm(Model model) {
+        if (!model.containsAttribute("todoForm")) {
+            model.addAttribute("todoForm", new TodoForm());
+        }
         return "todo/form";
     }
 
@@ -47,18 +70,22 @@ public class TodoController {
     }
 
     @PostMapping("/confirm")
-    public String confirm(@RequestParam("title") String title, Model model) {
+    public String confirm(@Valid @ModelAttribute("todoForm") TodoForm todoForm,
+                          BindingResult bindingResult,
+                          Model model) {
+        if (bindingResult.hasErrors()) {
+            return "todo/form";
+        }
         model.addAttribute("pageTitle", "\u767B\u9332\u5185\u5BB9\u306E\u78BA\u8A8D");
-        model.addAttribute("todoTitle", title);
         model.addAttribute("registerLabel", "\u767B\u9332");
         model.addAttribute("backLabel", "\u623B\u308B");
         return "todo/confirm";
     }
 
     @PostMapping("/complete")
-    public String complete(@RequestParam("title") String title) {
+    public String complete(@ModelAttribute("todoForm") TodoForm todoForm) {
         Todo todo = new Todo();
-        todo.setTitle(title);
+        todo.setTitle(todoForm.getTitle());
         todo.setCompleted(Boolean.FALSE);
         todoService.insert(todo);
         return "redirect:/todo";
@@ -88,7 +115,7 @@ public class TodoController {
         return "redirect:/todo";
     }
 
-    @PostMapping("/{id}/delete")
+    @DeleteMapping("/{id}")
     public String delete(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
         try {
             boolean deleted = todoService.deleteById(id);
@@ -103,9 +130,25 @@ public class TodoController {
         return "redirect:/todo";
     }
 
+    @PostMapping("/{id}/delete")
+    public String deleteLegacy(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
+        return delete(id, redirectAttributes);
+    }
+
     @PostMapping("/{id}/toggle")
     public String toggle(@PathVariable("id") Long id) {
         todoService.toggleCompleted(id);
         return "redirect:/todo";
+    }
+
+    private String normalizeSort(String sort) {
+        return switch (sort) {
+            case "title", "completed" -> sort;
+            default -> "createdAt";
+        };
+    }
+
+    private String normalizeDirection(String direction) {
+        return "asc".equalsIgnoreCase(direction) ? "asc" : "desc";
     }
 }
