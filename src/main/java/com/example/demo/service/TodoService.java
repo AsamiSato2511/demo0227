@@ -4,6 +4,9 @@ import java.util.List;
 
 import com.example.demo.mapper.TodoMapper;
 import com.example.demo.model.Todo;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -15,16 +18,18 @@ public class TodoService {
         this.todoMapper = todoMapper;
     }
 
-    public List<Todo> findAll(String sort, String direction) {
-        return todoMapper.findAll(sort, direction);
-    }
-
-    public List<Todo> searchByTitle(String keyword, String sort, String direction) {
-        return todoMapper.searchByTitle(keyword, sort, direction);
+    public Page<Todo> findPage(String keyword, Long categoryId, String sort, String direction, Pageable pageable) {
+        long total = todoMapper.countByConditions(keyword, categoryId);
+        List<Todo> content = todoMapper.findPage(keyword, categoryId, sort, direction, pageable.getPageSize(), pageable.getOffset());
+        return new PageImpl<>(content, pageable, total);
     }
 
     public Todo findById(Long id) {
         return todoMapper.findById(id);
+    }
+
+    public List<Todo> findAllForExport() {
+        return todoMapper.findAllForExport();
     }
 
     public void insert(Todo todo) {
@@ -47,5 +52,12 @@ public class TodoService {
 
     public boolean deleteById(Long id) {
         return todoMapper.deleteById(id) > 0;
+    }
+
+    public int deleteByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return 0;
+        }
+        return todoMapper.deleteByIds(ids);
     }
 }

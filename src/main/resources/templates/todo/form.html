@@ -33,6 +33,37 @@
                             <p class="text-danger small mt-1 mb-0" th:if="${#fields.hasErrors('detail')}" th:errors="*{detail}">Detail error</p>
                         </div>
 
+                        <div class="mb-4">
+                            <label for="priority" class="form-label">Priority</label>
+                            <select id="priority" name="priority" class="form-select">
+                                <option th:each="priority : ${T(com.example.demo.model.Priority).values()}"
+                                        th:value="${priority}"
+                                        th:text="${priority.displayName}"
+                                        th:selected="${todoForm.priority == priority}">
+                                    Medium
+                                </option>
+                            </select>
+                            <p class="text-danger small mt-1 mb-0" th:if="${#fields.hasErrors('priority')}" th:errors="*{priority}">Priority error</p>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="categoryId" class="form-label">Category</label>
+                            <select id="categoryId" name="categoryId" class="form-select">
+                                <option th:each="category : ${categories}"
+                                        th:value="${category.id}"
+                                        th:text="${category.name}"
+                                        th:selected="${todoForm.categoryId == category.id}">
+                                    Category
+                                </option>
+                            </select>
+                            <p class="text-danger small mt-1 mb-0" th:if="${#fields.hasErrors('categoryId')}" th:errors="*{categoryId}">Category error</p>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="deadline" class="form-label">Deadline</label>
+                            <input type="date" id="deadline" th:field="*{deadline}" class="form-control">
+                        </div>
+
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary">&#x78BA;&#x8A8D;&#x753B;&#x9762;&#x3078;</button>
                             <a class="btn btn-outline-secondary" th:href="@{/todo}" href="/todo">&#x623B;&#x308B;</a>
