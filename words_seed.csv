@@ -1,0 +1,61 @@
+term,meaning,minor_name,status,wrong_count
+CAPEX,設備投資。長期資産への投資。,Finance,学習中,0
+OPEX,運用費用。日常的な経費。,Finance,学習中,0
+NPV,正味現在価値。投資判断指標。,Finance,学習中,0
+IRR,内部収益率。投資採算指標。,Finance,学習中,0
+損益分岐点,利益が0になる売上高。,Finance,学習中,0
+ROE,自己資本利益率。,Finance,学習中,0
+ROA,総資産利益率。,Finance,学習中,0
+流動比率,短期支払能力を示す比率。,Finance,学習中,0
+固定比率,固定資産と自己資本の比率。,Finance,学習中,0
+減価償却,固定資産を費用配分する会計処理。,Finance,学習中,0
+NDA,秘密保持契約。,Contract,学習中,0
+SLA,サービス品質合意。,Service Management,学習中,0
+KPI,重要業績評価指標。,Management,学習中,0
+KGI,最終目標指標。,Management,学習中,0
+CSF,重要成功要因。,Management,学習中,0
+PDCA,継続的改善サイクル。,Management,学習中,0
+SWOT,強み弱み機会脅威分析。,Management,学習中,0
+3C,顧客競合自社の分析。,Management,学習中,0
+PEST,政治経済社会技術の外部分析。,Management,学習中,0
+バリューチェーン,価値創出活動の連鎖。,Management,学習中,0
+BCP,事業継続計画。,Risk Management,学習中,0
+BCM,事業継続マネジメント。,Risk Management,学習中,0
+ERM,全社的リスク管理。,Risk Management,学習中,0
+内部統制,業務の適正を確保する仕組み。,Governance,学習中,0
+監査証跡,操作履歴などの記録。,Governance,学習中,0
+可用性,システムが利用可能である性質。,Information Security,学習中,0
+機密性,情報を許可なく見せない性質。,Information Security,学習中,0
+完全性,情報が正確で改ざんされない性質。,Information Security,学習中,0
+多要素認証,複数要素で本人確認する認証。,Authentication,学習中,0
+シングルサインオン,一度の認証で複数利用可能。,Authentication,学習中,0
+PKI,公開鍵基盤。,Network Security,学習中,0
+電子証明書,公開鍵の正当性を証明するデータ。,Network Security,学習中,0
+デジタル署名,送信者証明と改ざん検知。,Network Security,学習中,0
+ハッシュ関数,固定長要約を生成する関数。,Cryptography,学習中,0
+ソルト,ハッシュ強化用の付加データ。,Cryptography,学習中,0
+共通鍵暗号,同じ鍵で暗号化復号する方式。,Cryptography,学習中,0
+公開鍵暗号,公開鍵と秘密鍵を使う方式。,Cryptography,学習中,0
+VPN,暗号化通信で安全な仮想専用網。,Network Security,学習中,0
+WAF,Webアプリ攻撃を防ぐファイアウォール。,Network Security,学習中,0
+IDS,侵入検知システム。,Network Security,学習中,0
+IPS,侵入防止システム。,Network Security,学習中,0
+RDBMS,関係データベース管理システム。,Relational DB,学習中,0
+主キー,行を一意に識別する列。,Relational DB,学習中,0
+外部キー,他表の主キーを参照する列。,Relational DB,学習中,0
+正規化,重複を減らし整合性を高める設計。,Relational DB,学習中,0
+トランザクション,一連処理を不可分に扱う単位。,Relational DB,学習中,0
+ACID,トランザクションの性質。,Relational DB,学習中,0
+インデックス,検索高速化のための索引。,Relational DB,学習中,0
+デッドロック,複数処理が相互待ちで停止。,Relational DB,学習中,0
+ビュー,SELECT結果を表のように扱う仕組み。,Relational DB,学習中,0
+オブジェクト指向,データと手続きをまとめる考え方。,Programming,学習中,0
+カプセル化,内部実装を隠蔽する概念。,Programming,学習中,0
+継承,既存クラスを引き継ぐ仕組み。,Programming,学習中,0
+ポリモーフィズム,同じ操作で異なる振る舞い。,Programming,学習中,0
+再帰,関数自身を呼び出す処理。,Programming,学習中,0
+計算量,アルゴリズム効率の指標。,Algorithm,学習中,0
+Big-O,計算量のオーダー表記。,Algorithm,学習中,0
+線形探索,先頭から順に探す探索法。,Algorithm,学習中,0
+二分探索,整列済みデータの高速探索法。,Algorithm,学習中,0
+スタック,LIFO構造のデータ構造。,Data Structure,学習中,0

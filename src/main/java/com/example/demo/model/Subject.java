@@ -14,5 +14,4 @@ public class Subject {
     private String majorName;
     private String minorName;
     private String color;
-    private Integer understanding;
 }

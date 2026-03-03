@@ -23,6 +23,17 @@
         </foreach>
     </insert>
 
+    <select id="findImportBatches" resultType="com.example.demo.model.ImportBatchSummary">
+        SELECT import_batch_id,
+               COUNT(*) AS total_count,
+               MIN(attempted_on) AS min_attempted_on,
+               MAX(attempted_on) AS max_attempted_on,
+               MAX(created_at) AS latest_created_at
+        FROM question_attempts
+        GROUP BY import_batch_id
+        ORDER BY latest_created_at DESC
+    </select>
+
     <select id="findFieldRates" resultType="com.example.demo.model.CorrectRateSummary">
         SELECT field_name AS name,
                COUNT(*) AS total_count,
@@ -32,6 +43,9 @@
         <where>
             <if test="fromDate != null">
                 attempted_on &gt;= #{fromDate}
+            </if>
+            <if test="importBatchId != null and importBatchId != ''">
+                AND import_batch_id = #{importBatchId}
             </if>
         </where>
         GROUP BY field_name
@@ -47,6 +61,9 @@
         <where>
             <if test="fromDate != null">
                 attempted_on &gt;= #{fromDate}
+            </if>
+            <if test="importBatchId != null and importBatchId != ''">
+                AND import_batch_id = #{importBatchId}
             </if>
         </where>
         GROUP BY minor_name
@@ -65,6 +82,9 @@
             <if test="fromDate != null">
                 attempted_on &gt;= #{fromDate}
             </if>
+            <if test="importBatchId != null and importBatchId != ''">
+                AND import_batch_id = #{importBatchId}
+            </if>
         </where>
         GROUP BY field_name, major_name, minor_name
     </select>
@@ -79,6 +99,9 @@
             <if test="fromDate != null">
                 attempted_on &gt;= #{fromDate}
             </if>
+            <if test="importBatchId != null and importBatchId != ''">
+                AND import_batch_id = #{importBatchId}
+            </if>
         </where>
         GROUP BY minor_name
         ORDER BY correct_rate ASC, total_count DESC
@@ -92,6 +115,9 @@
         <where>
             <if test="fromDate != null">
                 attempted_on &gt;= #{fromDate}
+            </if>
+            <if test="importBatchId != null and importBatchId != ''">
+                AND import_batch_id = #{importBatchId}
             </if>
         </where>
         ORDER BY attempted_on DESC, id DESC

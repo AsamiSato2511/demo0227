@@ -5,40 +5,21 @@
 <mapper namespace="com.example.demo.mapper.SubjectMapper">
 
     <select id="findAll" resultType="Subject">
-        SELECT id, field_name, major_name, minor_name, color, understanding
+        SELECT id, field_name, major_name, minor_name, color
         FROM subjects
         ORDER BY field_name, major_name, minor_name
     </select>
 
     <select id="findById" parameterType="long" resultType="Subject">
-        SELECT id, field_name, major_name, minor_name, color, understanding
+        SELECT id, field_name, major_name, minor_name, color
         FROM subjects
         WHERE id = #{id}
     </select>
-
-    <update id="updateUnderstanding">
-        UPDATE subjects
-        SET understanding = #{understanding}
-        WHERE id = #{id}
-    </update>
-
-    <update id="updateUnderstandingByCategory">
-        UPDATE subjects
-        SET understanding = #{understanding}
-        WHERE field_name = #{fieldName}
-          AND major_name = #{majorName}
-          AND minor_name = #{minorName}
-    </update>
 
     <update id="mergeFromCategory">
-        MERGE INTO subjects (field_name, major_name, minor_name, color, understanding)
+        MERGE INTO subjects (field_name, major_name, minor_name, color)
         KEY (field_name, major_name, minor_name)
-        VALUES (#{fieldName}, #{majorName}, #{minorName}, #{color}, 0)
+        VALUES (#{fieldName}, #{majorName}, #{minorName}, #{color})
     </update>
-
-    <select id="findAverageUnderstanding" resultType="double">
-        SELECT COALESCE(AVG(understanding), 0)
-        FROM subjects
-    </select>
 
 </mapper>

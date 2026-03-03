@@ -10,17 +10,8 @@ public interface SubjectMapper {
 
     Subject findById(@Param("id") Long id);
 
-    int updateUnderstanding(@Param("id") Long id, @Param("understanding") Integer understanding);
-
-    int updateUnderstandingByCategory(@Param("fieldName") String fieldName,
-                                      @Param("majorName") String majorName,
-                                      @Param("minorName") String minorName,
-                                      @Param("understanding") Integer understanding);
-
     int mergeFromCategory(@Param("fieldName") String fieldName,
                           @Param("majorName") String majorName,
                           @Param("minorName") String minorName,
                           @Param("color") String color);
-
-    Double findAverageUnderstanding();
 }

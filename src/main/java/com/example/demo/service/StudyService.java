@@ -4,11 +4,12 @@ import com.example.demo.mapper.ExamResultMapper;
 import com.example.demo.mapper.ExamSettingMapper;
 import com.example.demo.mapper.QuestionAttemptMapper;
 import com.example.demo.mapper.SubjectMapper;
-import com.example.demo.model.CategoryRateRow;
 import com.example.demo.model.CorrectRateSummary;
 import com.example.demo.model.ExamResult;
 import com.example.demo.model.ExamSetting;
+import com.example.demo.model.ImportBatchSummary;
 import com.example.demo.model.QuestionAttempt;
+import com.example.demo.model.Subject;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
@@ -21,12 +22,13 @@ import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.springframework.stereotype.Service;
@@ -35,6 +37,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 public class StudyService {
 
+    public static final int PASS_LINE = 70;
     private static final DateTimeFormatter DATE_SLASH = DateTimeFormatter.ofPattern("yyyy/M/d");
     private static final DateTimeFormatter DATE_SLASH_WITH_TIME = DateTimeFormatter.ofPattern("yyyy/M/d H:mm");
     private static final Pattern HYPERLINK_PATTERN =
@@ -75,12 +78,16 @@ public class StudyService {
 
     public String buildCountdownMessage(long days) {
         if (days > 0) {
-            return "試験まであと" + days + "日";
+            return "試験まであと " + days + " 日";
         }
         if (days == 0) {
-            return "試験当日です";
+            return "今日は試験日です";
         }
-        return "試験日から" + Math.abs(days) + "日経過";
+        return "試験日から " + Math.abs(days) + " 日経過";
+    }
+
+    public List<ImportBatchSummary> findImportBatches() {
+        return questionAttemptMapper.findImportBatches();
     }
 
     public List<ExamResult> findRecentResults(int limit) {
@@ -105,6 +112,7 @@ public class StudyService {
         String csvText = decodeCsv(file.getBytes());
         List<QuestionAttempt> items = new ArrayList<>();
         String batchId = UUID.randomUUID().toString();
+
         try (BufferedReader reader = new BufferedReader(new StringReader(csvText))) {
             String line;
             boolean firstRow = true;
@@ -119,10 +127,12 @@ public class StudyService {
                         continue;
                     }
                 }
+
                 List<String> cols = splitCsvLine(line);
                 if (cols.size() < 7) {
                     continue;
                 }
+
                 QuestionAttempt item = new QuestionAttempt();
                 item.setAttemptedOn(parseDate(cols.get(6)));
                 item.setCorrect(parseCorrect(cols.get(1)));
@@ -134,53 +144,109 @@ public class StudyService {
                 items.add(item);
             }
         }
+
         if (items.isEmpty()) {
             return 0;
         }
+
         questionAttemptMapper.insertBatch(items);
         syncSubjectsFromAttempts(items);
-        reflectUnderstandingFromMinorRates();
         return items.size();
     }
 
-    public List<CorrectRateSummary> findFieldRates(String period) {
-        return questionAttemptMapper.findFieldRates(resolveFromDate(period));
+    public List<CorrectRateSummary> findFieldRates(String importBatchId) {
+        return questionAttemptMapper.findFieldRates(null, normalizeBatch(importBatchId));
     }
 
-    public List<CorrectRateSummary> findMinorRates(String period) {
-        return questionAttemptMapper.findMinorRates(resolveFromDate(period));
+    public List<CorrectRateSummary> findMinorRates(String importBatchId) {
+        return questionAttemptMapper.findMinorRates(null, normalizeBatch(importBatchId));
     }
 
-    public List<CorrectRateSummary> findWorstMinorRates(String period, int limit) {
-        return questionAttemptMapper.findWorstMinorRates(resolveFromDate(period), limit);
+    public List<CorrectRateSummary> findBottleneckFieldsTop3(String importBatchId) {
+        List<CorrectRateSummary> list = new ArrayList<>(findFieldRates(importBatchId));
+        list.sort(Comparator.comparing(row -> row.getCorrectRate() != null ? row.getCorrectRate() : 0.0));
+        return list.size() > 3 ? list.subList(0, 3) : list;
     }
 
-    public List<QuestionAttempt> findRecentAttempts(String period, int limit) {
-        return questionAttemptMapper.findRecent(resolveFromDate(period), limit);
-    }
-
-    private void reflectUnderstandingFromMinorRates() {
-        List<CategoryRateRow> rates = questionAttemptMapper.findCategoryRates(null);
-        for (CategoryRateRow row : rates) {
-            if (row.getMinorName() == null || row.getCorrectRate() == null) {
-                continue;
+    public List<String> findWeakMinorNames(int limit, String importBatchId) {
+        List<CorrectRateSummary> list = questionAttemptMapper.findWorstMinorRates(null, normalizeBatch(importBatchId), limit);
+        List<String> result = new ArrayList<>();
+        for (CorrectRateSummary row : list) {
+            if (row.getName() != null && !row.getName().isBlank()) {
+                result.add(row.getName());
             }
-            int understanding = (int) Math.round(row.getCorrectRate());
-            subjectMapper.updateUnderstandingByCategory(
-                    row.getFieldName(),
-                    row.getMajorName(),
-                    row.getMinorName(),
-                    understanding
-            );
         }
+        return result;
+    }
+
+    public List<FieldImpact> calculateFieldImpacts(String importBatchId) {
+        List<CorrectRateSummary> fieldRates = findFieldRates(importBatchId);
+        long totalQuestions = fieldRates.stream()
+                .map(row -> row.getTotalCount() != null ? row.getTotalCount() : 0L)
+                .reduce(0L, Long::sum);
+        if (totalQuestions <= 0) {
+            return Collections.emptyList();
+        }
+
+        List<FieldImpact> impacts = new ArrayList<>();
+        for (CorrectRateSummary row : fieldRates) {
+            long count = row.getTotalCount() != null ? row.getTotalCount() : 0L;
+            double weightRate = (double) count / (double) totalQuestions;
+            double accuracy = row.getCorrectRate() != null ? row.getCorrectRate() : 0.0;
+            double effectiveDelta = Math.min(10.0, Math.max(0.0, 100.0 - accuracy));
+            double gainPoints = round1(weightRate * effectiveDelta);
+            impacts.add(new FieldImpact(row.getName(), accuracy, count, round1(weightRate * 100.0), gainPoints));
+        }
+        impacts.sort(Comparator.comparing(FieldImpact::getGainPointsForPlus10Rate).reversed());
+        return impacts;
+    }
+
+    public PassForecast calculatePassForecast(List<ExamResult> recentDesc) {
+        if (recentDesc == null || recentDesc.isEmpty()) {
+            return new PassForecast(0.0, 0.0);
+        }
+
+        double latest = recentDesc.get(0).getScoreTotal() != null ? recentDesc.get(0).getScoreTotal() : 0.0;
+        List<Double> scoresAsc = new ArrayList<>();
+        int take = Math.min(3, recentDesc.size());
+        for (int i = take - 1; i >= 0; i--) {
+            Integer s = recentDesc.get(i).getScoreTotal();
+            scoresAsc.add(s != null ? s.doubleValue() : 0.0);
+        }
+
+        double slope = 0.0;
+        if (scoresAsc.size() >= 2) {
+            slope = (scoresAsc.get(scoresAsc.size() - 1) - scoresAsc.get(0)) / (scoresAsc.size() - 1);
+        }
+        double predicted = round1(latest + slope);
+
+        double probability = 50.0 + ((predicted - PASS_LINE) * 3.0) + (slope * 2.0);
+        probability = Math.max(1.0, Math.min(99.0, probability));
+        return new PassForecast(round1(probability), predicted);
+    }
+
+    public int latestScore(List<ExamResult> recentDesc) {
+        if (recentDesc == null || recentDesc.isEmpty() || recentDesc.get(0).getScoreTotal() == null) {
+            return 0;
+        }
+        return recentDesc.get(0).getScoreTotal();
+    }
+
+    public int previousDiff(List<ExamResult> recentDesc) {
+        if (recentDesc == null || recentDesc.size() < 2) {
+            return 0;
+        }
+        int latest = recentDesc.get(0).getScoreTotal() != null ? recentDesc.get(0).getScoreTotal() : 0;
+        int prev = recentDesc.get(1).getScoreTotal() != null ? recentDesc.get(1).getScoreTotal() : 0;
+        return latest - prev;
     }
 
     private void syncSubjectsFromAttempts(List<QuestionAttempt> items) {
         Set<String> seen = new HashSet<>();
         Map<String, String> colorMap = new HashMap<>();
-        colorMap.put("ストラテジ系", "#fd7e14");
-        colorMap.put("マネジメント系", "#0d6efd");
-        colorMap.put("テクノロジ系", "#198754");
+        colorMap.put("ストラテジ", "#fd7e14");
+        colorMap.put("マネジメント", "#0d6efd");
+        colorMap.put("テクノロジ", "#198754");
 
         for (QuestionAttempt item : items) {
             String key = item.getFieldName() + "|" + item.getMajorName() + "|" + item.getMinorName();
@@ -190,6 +256,13 @@ public class StudyService {
             String color = colorMap.getOrDefault(item.getFieldName(), "#6c757d");
             subjectMapper.mergeFromCategory(item.getFieldName(), item.getMajorName(), item.getMinorName(), color);
         }
+    }
+
+    private String normalizeBatch(String importBatchId) {
+        if (importBatchId == null || importBatchId.isBlank() || "all".equals(importBatchId)) {
+            return null;
+        }
+        return importBatchId;
     }
 
     private String decodeCsv(byte[] bytes) {
@@ -213,17 +286,7 @@ public class StudyService {
             return false;
         }
         String head = text.length() > 200 ? text.substring(0, 200) : text;
-        return head.contains("No.") && head.contains("正誤") && head.contains("分野名");
-    }
-
-    private LocalDate resolveFromDate(String period) {
-        if ("30d".equals(period)) {
-            return LocalDate.now().minusDays(30);
-        }
-        if ("7d".equals(period)) {
-            return LocalDate.now().minusDays(7);
-        }
-        return null;
+        return head.contains("No.");
     }
 
     private void applyHyperlink(String raw, QuestionAttempt item) {
@@ -296,5 +359,9 @@ public class StudyService {
         }
         values.add(current.toString());
         return values;
+    }
+
+    private double round1(double value) {
+        return Math.round(value * 10.0) / 10.0;
     }
 }
