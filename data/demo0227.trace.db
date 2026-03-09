@@ -1,0 +1,188 @@
+2026-03-05 14:51:17.492166+09:00 database: flush
+org.h2.message.DbException: 一般エラー: "org.h2.mvstore.MVStoreException: The file is locked: C:/academia/src/demo0227/data/demo0227.mv.db [2.3.232/7]"
+General error: "org.h2.mvstore.MVStoreException: The file is locked: C:/academia/src/demo0227/data/demo0227.mv.db [2.3.232/7]" [50000-232]
+	at org.h2.message.DbException.get(DbException.java:212)
+	at org.h2.message.DbException.convert(DbException.java:407)
+	at org.h2.mvstore.db.Store.lambda$new$0(Store.java:122)
+	at org.h2.mvstore.MVStore.handleException(MVStore.java:1546)
+	at org.h2.mvstore.MVStore.panic(MVStore.java:371)
+	at org.h2.mvstore.MVStore.<init>(MVStore.java:291)
+	at org.h2.mvstore.MVStore$Builder.open(MVStore.java:2035)
+	at org.h2.mvstore.db.Store.<init>(Store.java:133)
+	at org.h2.engine.Database.<init>(Database.java:326)
+	at org.h2.engine.Engine.openSession(Engine.java:92)
+	at org.h2.engine.Engine.openSession(Engine.java:222)
+	at org.h2.engine.Engine.createSession(Engine.java:201)
+	at org.h2.engine.SessionRemote.connectEmbeddedOrServer(SessionRemote.java:344)
+	at org.h2.jdbc.JdbcConnection.<init>(JdbcConnection.java:124)
+	at org.h2.Driver.connect(Driver.java:59)
+	at java.sql/java.sql.DriverManager.getConnection(DriverManager.java:681)
+	at java.sql/java.sql.DriverManager.getConnection(DriverManager.java:229)
+	at DeleteCsvDateData.main(DeleteCsvDateData.java:6)
+Caused by: org.h2.jdbc.JdbcSQLNonTransientException: 一般エラー: "org.h2.mvstore.MVStoreException: The file is locked: C:/academia/src/demo0227/data/demo0227.mv.db [2.3.232/7]"
+General error: "org.h2.mvstore.MVStoreException: The file is locked: C:/academia/src/demo0227/data/demo0227.mv.db [2.3.232/7]" [50000-232]
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:566)
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:489)
+	... 18 more
+Caused by: org.h2.mvstore.MVStoreException: The file is locked: C:/academia/src/demo0227/data/demo0227.mv.db [2.3.232/7]
+	at org.h2.mvstore.DataUtils.newMVStoreException(DataUtils.java:996)
+	at org.h2.mvstore.SingleFileStore.lockFileChannel(SingleFileStore.java:143)
+	at org.h2.mvstore.SingleFileStore.open(SingleFileStore.java:117)
+	at org.h2.mvstore.SingleFileStore.open(SingleFileStore.java:81)
+	at org.h2.mvstore.MVStore.<init>(MVStore.java:286)
+	... 12 more
+2026-03-06 14:10:31.264260+09:00 database: opening C:/academia/src/demo0227/data/demo0227
+org.h2.message.DbException: データベースオープンエラー: "Another process was faster"
+Error opening database: "Another process was faster" [8000-232]
+	at org.h2.message.DbException.get(DbException.java:212)
+	at org.h2.store.FileLock.getExceptionFatal(FileLock.java:429)
+	at org.h2.store.FileLock.lockFile(FileLock.java:330)
+	at org.h2.store.FileLock.lock(FileLock.java:110)
+	at org.h2.engine.Database.<init>(Database.java:317)
+	at org.h2.engine.Engine.openSession(Engine.java:92)
+	at org.h2.engine.Engine.openSession(Engine.java:222)
+	at org.h2.engine.Engine.createSession(Engine.java:201)
+	at org.h2.engine.SessionRemote.connectEmbeddedOrServer(SessionRemote.java:344)
+	at org.h2.jdbc.JdbcConnection.<init>(JdbcConnection.java:124)
+	at org.h2.Driver.connect(Driver.java:59)
+	at com.zaxxer.hikari.util.DriverDataSource.getConnection(DriverDataSource.java:144)
+	at com.zaxxer.hikari.pool.PoolBase.newConnection(PoolBase.java:370)
+	at com.zaxxer.hikari.pool.PoolBase.newPoolEntry(PoolBase.java:207)
+	at com.zaxxer.hikari.pool.HikariPool.createPoolEntry(HikariPool.java:488)
+	at com.zaxxer.hikari.pool.HikariPool.checkFailFast(HikariPool.java:576)
+	at com.zaxxer.hikari.pool.HikariPool.<init>(HikariPool.java:97)
+	at com.zaxxer.hikari.HikariDataSource.getConnection(HikariDataSource.java:111)
+	at org.springframework.jdbc.datasource.DataSourceUtils.fetchConnection(DataSourceUtils.java:160)
+	at org.springframework.jdbc.datasource.DataSourceUtils.doGetConnection(DataSourceUtils.java:118)
+	at org.springframework.jdbc.datasource.DataSourceUtils.getConnection(DataSourceUtils.java:81)
+	at org.springframework.jdbc.datasource.init.DatabasePopulatorUtils.execute(DatabasePopulatorUtils.java:52)
+	at org.springframework.boot.jdbc.init.DataSourceScriptDatabaseInitializer.runScripts(DataSourceScriptDatabaseInitializer.java:87)
+	at org.springframework.boot.sql.init.AbstractScriptDatabaseInitializer.runScripts(AbstractScriptDatabaseInitializer.java:146)
+	at org.springframework.boot.sql.init.AbstractScriptDatabaseInitializer.applyScripts(AbstractScriptDatabaseInitializer.java:108)
+	at org.springframework.boot.sql.init.AbstractScriptDatabaseInitializer.applySchemaScripts(AbstractScriptDatabaseInitializer.java:98)
+	at org.springframework.boot.sql.init.AbstractScriptDatabaseInitializer.initializeDatabase(AbstractScriptDatabaseInitializer.java:76)
+	at org.springframework.boot.sql.init.AbstractScriptDatabaseInitializer.afterPropertiesSet(AbstractScriptDatabaseInitializer.java:66)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1873)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1822)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:607)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:254)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1770)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1653)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireByType(AbstractAutowireCapableBeanFactory.java:1541)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.populateBean(AbstractAutowireCapableBeanFactory.java:1450)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:606)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1708)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1653)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:913)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:791)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:240)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1395)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1232)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:569)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:529)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:339)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:373)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.instantiateSingleton(DefaultListableBeanFactory.java:1228)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingleton(DefaultListableBeanFactory.java:1194)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:1130)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:991)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:628)
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:146)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:752)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:439)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:318)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1361)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1350)
+	at com.example.demo.DemoApplication.main(DemoApplication.java:12)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+	at org.springframework.boot.devtools.restart.RestartLauncher.run(RestartLauncher.java:50)
+Caused by: org.h2.jdbc.JdbcSQLNonTransientConnectionException: データベースオープンエラー: "Another process was faster"
+Error opening database: "Another process was faster" [8000-232]
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:516)
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:489)
+	... 79 more
+2026-03-09 11:54:08.153482+09:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: SQLステートメントに文法エラーがあります "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"
+Syntax error in SQL statement "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"; SQL statement:
+﻿CREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL ) [42000-232]
+2026-03-09 11:54:37.981629+09:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: SQLステートメントに文法エラーがあります "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"
+Syntax error in SQL statement "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"; SQL statement:
+﻿CREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL ) [42000-232]
+2026-03-09 11:54:53.508456+09:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: SQLステートメントに文法エラーがあります "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"
+Syntax error in SQL statement "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"; SQL statement:
+﻿CREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL ) [42000-232]
+2026-03-09 11:56:17.822046+09:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: SQLステートメントに文法エラーがあります "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"
+Syntax error in SQL statement "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"; SQL statement:
+﻿CREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL ) [42000-232]
+2026-03-09 11:57:21.950196+09:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: SQLステートメントに文法エラーがあります "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"
+Syntax error in SQL statement "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"; SQL statement:
+﻿CREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL ) [42000-232]
+2026-03-09 11:58:48.109318+09:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: SQLステートメントに文法エラーがあります "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"
+Syntax error in SQL statement "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"; SQL statement:
+﻿CREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL ) [42000-232]
+2026-03-09 11:59:22.858774+09:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: SQLステートメントに文法エラーがあります "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"
+Syntax error in SQL statement "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"; SQL statement:
+﻿CREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL ) [42000-232]
+2026-03-09 11:59:36.032848+09:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: SQLステートメントに文法エラーがあります "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"
+Syntax error in SQL statement "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"; SQL statement:
+﻿CREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL ) [42000-232]
+2026-03-09 12:00:26.118426+09:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: SQLステートメントに文法エラーがあります "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"
+Syntax error in SQL statement "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"; SQL statement:
+﻿CREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL ) [42000-232]
+2026-03-09 12:00:56.899200+09:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: SQLステートメントに文法エラーがあります "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"
+Syntax error in SQL statement "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"; SQL statement:
+﻿CREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL ) [42000-232]
+2026-03-09 12:01:39.874238+09:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: SQLステートメントに文法エラーがあります "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"
+Syntax error in SQL statement "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"; SQL statement:
+﻿CREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL ) [42000-232]
+2026-03-09 12:03:09.039749+09:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: SQLステートメントに文法エラーがあります "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"
+Syntax error in SQL statement "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"; SQL statement:
+﻿CREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL ) [42000-232]
+2026-03-09 12:03:44.811971+09:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: SQLステートメントに文法エラーがあります "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"
+Syntax error in SQL statement "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"; SQL statement:
+﻿CREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL ) [42000-232]
+2026-03-09 12:03:56.078878+09:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: SQLステートメントに文法エラーがあります "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"
+Syntax error in SQL statement "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"; SQL statement:
+﻿CREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL ) [42000-232]
+2026-03-09 12:04:17.747728+09:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: SQLステートメントに文法エラーがあります "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"
+Syntax error in SQL statement "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"; SQL statement:
+﻿CREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL ) [42000-232]
+2026-03-09 12:04:29.576898+09:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: SQLステートメントに文法エラーがあります "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"
+Syntax error in SQL statement "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"; SQL statement:
+﻿CREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL ) [42000-232]
+2026-03-09 12:08:24.618091+09:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: SQLステートメントに文法エラーがあります "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"
+Syntax error in SQL statement "[*]\feffCREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL )"; SQL statement:
+﻿CREATE TABLE IF NOT EXISTS exam_settings ( id BIGINT PRIMARY KEY, exam_date DATE NOT NULL ) [42000-232]

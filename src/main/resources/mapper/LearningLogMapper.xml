@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demo.mapper.LearningLogMapper">
+
+    <insert id="insert">
+        INSERT INTO learning_logs (action_type, word_id, answered_at, correct)
+        VALUES (#{actionType}, #{wordId}, #{answeredAt}, #{correct})
+    </insert>
+
+    <select id="findDailyCounts" resultType="com.example.demo.model.LearningHeatmapCell">
+        SELECT CAST(answered_at AS DATE) AS learning_date,
+               COUNT(*) AS action_count
+        FROM learning_logs
+        WHERE CAST(answered_at AS DATE) BETWEEN #{fromDate} AND #{toDate}
+        GROUP BY CAST(answered_at AS DATE)
+        ORDER BY learning_date ASC
+    </select>
+
+</mapper>

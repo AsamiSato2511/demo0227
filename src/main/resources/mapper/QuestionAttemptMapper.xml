@@ -124,4 +124,35 @@
         LIMIT #{limit}
     </select>
 
+    <select id="findDailyScores" resultType="com.example.demo.model.ExamResult">
+        SELECT attempted_on AS taken_on,
+               'CSV Import' AS source,
+               CAST(ROUND(100.0 * SUM(CASE WHEN correct THEN 1 ELSE 0 END) / COUNT(*), 0) AS INT) AS score_total
+        FROM question_attempts
+        <where>
+            <if test="importBatchId != null and importBatchId != ''">
+                import_batch_id = #{importBatchId}
+            </if>
+        </where>
+        GROUP BY attempted_on
+        ORDER BY attempted_on DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="findRecentWrongCountsByMinor" resultType="com.example.demo.model.MinorWrongCount">
+        SELECT minor_name,
+               COUNT(*) AS wrong_count
+        FROM question_attempts
+        <where>
+            correct = FALSE
+            <if test="fromDate != null">
+                AND attempted_on &gt;= #{fromDate}
+            </if>
+            <if test="importBatchId != null and importBatchId != ''">
+                AND import_batch_id = #{importBatchId}
+            </if>
+        </where>
+        GROUP BY minor_name
+    </select>
+
 </mapper>

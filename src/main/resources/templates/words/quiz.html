@@ -1,48 +1,68 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ja" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>単語クイズ</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <th:block th:replace="~{fragments/layout :: commonHead('10問クイズ')}"></th:block>
+    <style>
+        .quiz-shell { max-width: 720px; margin: 0 auto; }
+        .judge-mark { font-size: 2.15rem; font-weight: 800; line-height: 1; }
+    </style>
 </head>
-<body class="bg-light">
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="h3 mb-0">単語クイズ</h1>
-        <a class="btn btn-outline-secondary" th:href="@{/words(minorName=${minorName})}">一覧へ戻る</a>
-    </div>
+<body>
+<div class="page-wrap">
+    <div class="quiz-shell">
+        <div class="section-stack d-flex justify-content-between align-items-center" style="gap:.5rem;flex-wrap:wrap;">
+            <h1 class="page-title" style="font-size:1.55rem;" th:text="${mode == 'REVIEW'} ? '間違い復習クイズ' : '10問クイズ'">10問クイズ</h1>
+            <a class="secondary-button" th:href="@{/words(minorName=${minorName})}">一覧へ戻る</a>
+        </div>
 
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <div class="text-muted mb-2" th:text="${index + ' / ' + total}">1 / 10</div>
-            <h2 class="h4 mb-3" th:text="${current.term}">term</h2>
+        <div style="font-size:.84rem;color:var(--text-sub);margin-bottom:.35rem;" th:text="${index + ' / ' + total}">1 / 10</div>
+        <div class="progress-bar section-stack"><div class="progress-fill" style="background:var(--primary);" th:styleappend="'width:' + ${progressPercent} + '%'" ></div></div>
 
-            <form th:if="${!isAnswered}" th:action="@{/words/quiz/answer}" method="post">
-                <input type="hidden" name="minorName" th:value="${minorName}">
-                <div class="list-group mb-3">
-                    <label class="list-group-item" th:each="opt, stat : ${current.options}">
-                        <input class="form-check-input me-2" type="radio" name="choiceIndex" th:value="${stat.index}" required>
-                        <span th:text="${opt}">option</span>
-                    </label>
-                </div>
-                <button class="btn btn-primary" type="submit">回答する</button>
-            </form>
+        <section class="dashboard-card section-stack" style="text-align:center;">
+            <div class="section-index">問題</div>
+            <h2 class="section-title" style="font-size:1.35rem;margin-bottom:0;" th:text="${current.term}">term</h2>
+        </section>
 
-            <div th:if="${isAnswered}">
-                <div th:if="${current.correct}" class="alert alert-success mb-2">〇 正解</div>
-                <div th:unless="${current.correct}" class="alert alert-danger mb-2">× 不正解</div>
-                <div class="mb-3">
-                    <div class="fw-semibold">解説</div>
-                    <div th:text="${current.correctMeaning}">meaning</div>
-                </div>
-                <form th:action="@{/words/quiz/next}" method="post">
-                    <input type="hidden" name="minorName" th:value="${minorName}">
-                    <button class="btn btn-success" type="submit">次へ</button>
-                </form>
+        <form id="answerForm" th:action="@{/words/quiz/answer}" method="post">
+            <input type="hidden" name="minorName" th:value="${minorName}">
+            <input type="hidden" name="mode" th:value="${mode}">
+            <input type="hidden" name="choiceIndex" id="choiceIndex">
+        </form>
+
+        <div class="section-stack" style="display:grid;gap:.55rem;">
+            <div th:each="opt, stat : ${current.options}">
+                <button type="button"
+                        class="quiz-option-card"
+                        th:classappend="${isAnswered} ? (${opt == correctMeaning} ? ' quiz-option-correct' : (${stat.index == selectedChoice} ? ' quiz-option-wrong' : ' quiz-option-muted')) : ''"
+                        th:disabled="${isAnswered}"
+                        th:onclick="|submitChoice(${stat.index})|">
+                    <span th:text="${opt}">option</span>
+                </button>
             </div>
         </div>
+
+        <section class="dashboard-card section-stack" th:if="${isAnswered}" style="text-align:center;">
+            <div class="judge-mark" th:if="${isCorrect}" style="color:var(--success);">〇 正解</div>
+            <div class="judge-mark" th:unless="${isCorrect}" style="color:var(--danger);">× 不正解</div>
+            <div class="section-title" style="font-size:.95rem;margin:.55rem 0 .2rem;">正解・解説</div>
+            <p style="margin:0;color:var(--text-sub);" th:text="${explanation}">meaning</p>
+        </section>
+
+        <form th:if="${isAnswered}" th:action="@{/words/quiz/next}" method="post">
+            <input type="hidden" name="minorName" th:value="${minorName}">
+            <input type="hidden" name="mode" th:value="${mode}">
+            <button class="cta-button" style="width:100%;" type="submit">次へ</button>
+        </form>
     </div>
 </div>
+
+<script>
+    function submitChoice(index) {
+        const input = document.getElementById('choiceIndex');
+        if (!input) return;
+        input.value = index;
+        document.getElementById('answerForm').submit();
+    }
+</script>
 </body>
 </html>

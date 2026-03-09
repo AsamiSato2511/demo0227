@@ -1,4 +1,4 @@
-package com.example.demo.service;
+﻿package com.example.demo.service;
 
 import com.example.demo.model.CorrectRateSummary;
 import com.example.demo.model.ExamResult;
@@ -10,32 +10,33 @@ import org.springframework.stereotype.Service;
 public class AdviceService {
 
     public List<String> buildAdvice(List<ExamResult> recentResults,
-                                    List<FieldImpact> impacts,
+                                    List<CorrectRateSummary> fieldRates,
                                     List<CorrectRateSummary> bottleneckTop3,
                                     int remainToPass,
                                     int previousDiff) {
         List<String> lines = new ArrayList<>();
-        if (remainToPass > 0) {
-            lines.add("合格まであと" + remainToPass + "点。得点効率の高い分野から対策してください。");
-        } else {
-            lines.add("合格ライン到達中です。得点維持のため弱点分野を継続しましょう。");
-        }
 
-        if (!impacts.isEmpty()) {
-            FieldImpact top = impacts.get(0);
-            lines.add(top.getFieldName() + "を+10%改善すると約+" + top.getGainPointsForPlus10Rate() + "点見込みです。");
+        if (remainToPass > 0) {
+            lines.add("合格ラインまであと" + remainToPass + "点。弱点分野の取りこぼし回収が最短ルートです。");
+        } else {
+            lines.add("合格ラインを超えています。弱点分野を1つずつ潰して安定化しましょう。");
         }
 
         if (!bottleneckTop3.isEmpty()) {
-            String name = bottleneckTop3.get(0).getName();
-            Double rate = bottleneckTop3.get(0).getCorrectRate();
-            lines.add("最優先ボトルネックは" + name + "（正答率 " + (rate != null ? rate : 0.0) + "%）です。");
+            CorrectRateSummary weakest = bottleneckTop3.get(0);
+            double rate = weakest.getCorrectRate() != null ? weakest.getCorrectRate() : 0.0;
+            lines.add("最優先は「" + weakest.getName() + "」（正答率 " + rate + "%）。まずここを10問実施。");
         }
 
         if (recentResults.size() >= 2) {
             lines.add(previousDiff >= 0
-                    ? "前回比で+" + previousDiff + "点。現ペースを維持して演習量を増やしましょう。"
-                    : "前回比で" + previousDiff + "点。直近の誤答分野に絞って復習してください。");
+                    ? "直近は +" + previousDiff + "点で改善傾向。現在の学習リズムを維持してください。"
+                    : "直近は " + previousDiff + "点。今日中に間違い復習を1セット入れましょう。");
+        }
+
+        if (!fieldRates.isEmpty()) {
+            CorrectRateSummary strongest = fieldRates.get(0);
+            lines.add("今日やること: 弱点10問 -> 間違い復習 -> 「" + strongest.getName() + "」で成功体験を作る。");
         }
         return lines;
     }

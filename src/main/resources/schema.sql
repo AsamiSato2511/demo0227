@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS learning_logs;
 DROP TABLE IF EXISTS question_attempts;
 DROP TABLE IF EXISTS exam_results;
 DROP TABLE IF EXISTS words;
@@ -50,9 +51,28 @@ CREATE TABLE words (
     minor_name VARCHAR(150) NOT NULL,
     status VARCHAR(20) NOT NULL DEFAULT '学習中',
     wrong_count INT NOT NULL DEFAULT 0,
+    quiz_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    choice1 VARCHAR(1000),
+    choice2 VARCHAR(1000),
+    choice3 VARCHAR(1000),
+    choice4 VARCHAR(1000),
+    answer_index INT,
     last_reviewed_on DATE,
+    last_reviewed_at TIMESTAMP,
+    last_correct_at TIMESTAMP,
+    priority INT NOT NULL DEFAULT 0,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT uq_words_term UNIQUE (term)
+);
+
+CREATE TABLE learning_logs (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    action_type VARCHAR(40) NOT NULL,
+    word_id BIGINT,
+    answered_at TIMESTAMP NOT NULL,
+    correct BOOLEAN,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 INSERT INTO exam_settings (id, exam_date) VALUES (1, DATEADD('DAY', 45, CURRENT_DATE));
@@ -63,7 +83,7 @@ INSERT INTO subjects (field_name, major_name, minor_name, color) VALUES
 ('Strategy', 'Management', 'Finance', '#fd7e14');
 
 INSERT INTO exam_results (taken_on, source, score_total, memo) VALUES
-(DATEADD('DAY', -14, CURRENT_DATE), '模試A', 58, '午後問題で失点'),
+(DATEADD('DAY', -14, CURRENT_DATE), '模試A', 58, '基礎で失点'),
 (DATEADD('DAY', -7, CURRENT_DATE), '模試B', 63, 'セキュリティ改善'),
 (CURRENT_DATE, '模試C', 67, 'あと3点');
 
@@ -79,7 +99,7 @@ INSERT INTO question_attempts (attempted_on, correct, field_name, major_name, mi
 (DATEADD('DAY', -4, CURRENT_DATE), FALSE, 'Strategy', 'Management', 'Finance', 'Q9', 'https://example.com/q9', 'seed-batch'),
 (DATEADD('DAY', -3, CURRENT_DATE), FALSE, 'Strategy', 'Management', 'Finance', 'Q10', 'https://example.com/q10', 'seed-batch');
 
-INSERT INTO words (term, meaning, minor_name, status, wrong_count) VALUES
-('CAPEX', '設備投資。長期資産への投資。', 'Finance', '学習中', 1),
-('PKI', '公開鍵基盤。電子証明書を扱う仕組み。', 'Network Security', '要復習', 3),
-('Primary Key', 'テーブルで行を一意に識別するキー。', 'Relational DB', '学習中', 2);
+INSERT INTO words (term, meaning, minor_name, status, wrong_count, quiz_enabled, last_reviewed_at) VALUES
+('CAPEX', '設備投資。固定資産への投資。', 'Finance', '学習中', 1, TRUE, DATEADD('DAY', -7, CURRENT_TIMESTAMP)),
+('PKI', '公開鍵基盤。証明書で鍵を管理する仕組み。', 'Network Security', '要復習', 3, TRUE, DATEADD('DAY', -3, CURRENT_TIMESTAMP)),
+('Primary Key', 'テーブル内で行を一意に識別するキー。', 'Relational DB', '学習中', 2, TRUE, DATEADD('DAY', -1, CURRENT_TIMESTAMP));

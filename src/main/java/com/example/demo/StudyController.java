@@ -1,12 +1,16 @@
-package com.example.demo;
+﻿package com.example.demo;
 
 import com.example.demo.form.ExamSettingForm;
 import com.example.demo.model.CorrectRateSummary;
 import com.example.demo.model.ExamResult;
 import com.example.demo.model.ExamSetting;
+import com.example.demo.model.ForgettingReminderItem;
+import com.example.demo.model.LearningHeatmapCell;
+import com.example.demo.model.PriorityLearningItem;
+import com.example.demo.model.Word;
+import com.example.demo.service.AdviceService;
 import com.example.demo.service.FieldImpact;
 import com.example.demo.service.PassForecast;
-import com.example.demo.service.AdviceService;
 import com.example.demo.service.StudyService;
 import java.io.IOException;
 import java.time.LocalDate;
@@ -54,7 +58,11 @@ public class StudyController {
         List<CorrectRateSummary> bottleneckTop3 = studyService.findBottleneckFieldsTop3(batch);
         List<FieldImpact> impacts = studyService.calculateFieldImpacts(batch);
         List<String> weakMinorNames = studyService.findWeakMinorNames(3, batch);
-        List<String> adviceLines = adviceService.buildAdvice(recentResults, impacts, bottleneckTop3, remainToPass, previousDiff);
+        List<Word> weakWords = studyService.findWeakWords(6);
+        List<String> adviceLines = adviceService.buildAdvice(recentResults, fieldRates, bottleneckTop3, remainToPass, previousDiff);
+        List<PriorityLearningItem> priorityLearnings = studyService.findTodayPriorityLearnings(batch, daysUntilExam);
+        List<ForgettingReminderItem> forgettingReminders = studyService.findForgettingReminders(6);
+        List<LearningHeatmapCell> heatmapCells = studyService.findLearningHeatmap(70);
 
         List<ExamResult> trendAsc = new ArrayList<>(recentResults);
         Collections.reverse(trendAsc);
@@ -63,6 +71,16 @@ public class StudyController {
         for (ExamResult row : trendAsc) {
             trendLabels.add(row.getTakenOn() != null ? row.getTakenOn().toString() : "-");
             trendScores.add(row.getScoreTotal() != null ? row.getScoreTotal() : 0);
+        }
+
+        List<String> heatmapDates = new ArrayList<>();
+        List<Integer> heatmapCounts = new ArrayList<>();
+        int heatmapMax = 0;
+        for (LearningHeatmapCell cell : heatmapCells) {
+            heatmapDates.add(cell.getLearningDate().toString());
+            int count = cell.getActionCount() != null ? cell.getActionCount() : 0;
+            heatmapCounts.add(count);
+            heatmapMax = Math.max(heatmapMax, count);
         }
 
         ExamSettingForm examSettingForm = new ExamSettingForm();
@@ -89,8 +107,14 @@ public class StudyController {
         model.addAttribute("fieldImpacts", impacts);
         model.addAttribute("bottleneckTop3", bottleneckTop3);
         model.addAttribute("weakMinorNames", weakMinorNames);
+        model.addAttribute("weakWords", weakWords);
         model.addAttribute("adviceLines", adviceLines);
         model.addAttribute("minorRates", studyService.findMinorRates(batch));
+        model.addAttribute("priorityLearnings", priorityLearnings);
+        model.addAttribute("forgettingReminders", forgettingReminders);
+        model.addAttribute("heatmapDates", heatmapDates);
+        model.addAttribute("heatmapCounts", heatmapCounts);
+        model.addAttribute("heatmapMax", heatmapMax);
         return "study/index";
     }
 
@@ -114,7 +138,7 @@ public class StudyController {
                 redirectAttributes.addFlashAttribute("errorMessage", "取り込める行がありませんでした。");
             }
         } catch (IOException ex) {
-            redirectAttributes.addFlashAttribute("errorMessage", "CSV取込に失敗しました。");
+            redirectAttributes.addFlashAttribute("errorMessage", "CSV取り込みに失敗しました。");
         }
         return "redirect:/study";
     }

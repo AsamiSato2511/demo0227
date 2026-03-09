@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+﻿<?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
@@ -13,12 +13,28 @@
         <result property="minorName" column="minor_name"/>
         <result property="status" column="status"/>
         <result property="wrongCount" column="wrong_count"/>
+        <result property="quizEnabled" column="quiz_enabled"/>
+        <result property="choice1" column="choice1"/>
+        <result property="choice2" column="choice2"/>
+        <result property="choice3" column="choice3"/>
+        <result property="choice4" column="choice4"/>
+        <result property="answerIndex" column="answer_index"/>
         <result property="lastReviewedOn" column="last_reviewed_on"/>
+        <result property="lastReviewedAt" column="last_reviewed_at"/>
+        <result property="lastCorrectAt" column="last_correct_at"/>
+        <result property="priority" column="priority"/>
+        <result property="updatedAt" column="updated_at"/>
         <result property="createdAt" column="created_at"/>
     </resultMap>
 
+    <sql id="wordColumns">
+        id, term, meaning, field_name, major_name, minor_name, status, wrong_count, quiz_enabled,
+        choice1, choice2, choice3, choice4, answer_index, last_reviewed_on, last_reviewed_at,
+        last_correct_at, priority, updated_at, created_at
+    </sql>
+
     <select id="findAll" resultMap="wordResultMap">
-        SELECT id, term, meaning, field_name, major_name, minor_name, status, wrong_count, last_reviewed_on, created_at
+        SELECT <include refid="wordColumns"/>
         FROM words
         <where>
             <if test="keyword != null and keyword != ''">
@@ -30,31 +46,148 @@
             <if test="status != null and status != '' and status != 'all'">
                 AND status = #{status}
             </if>
+            <if test="importance != null and importance != '' and importance != 'all'">
+                <choose>
+                    <when test="importance == 'high'">
+                        AND wrong_count &gt;= 5
+                    </when>
+                    <when test="importance == 'mid'">
+                        AND wrong_count BETWEEN 2 AND 4
+                    </when>
+                    <when test="importance == 'low'">
+                        AND wrong_count &lt;= 1
+                    </when>
+                </choose>
+            </if>
         </where>
         ORDER BY wrong_count DESC, term ASC
     </select>
 
     <select id="findAllPool" resultMap="wordResultMap">
-        SELECT id, term, meaning, field_name, major_name, minor_name, status, wrong_count, last_reviewed_on, created_at
+        SELECT <include refid="wordColumns"/>
         FROM words
         <where>
+            quiz_enabled = TRUE
             <if test="minorName != null and minorName != ''">
-                minor_name = #{minorName}
+                AND minor_name = #{minorName}
             </if>
         </where>
+    </select>
+
+    <select id="findMinorNames" resultType="string">
+        SELECT DISTINCT minor_name
+        FROM words
+        WHERE minor_name IS NOT NULL AND minor_name &lt;&gt; ''
+        ORDER BY minor_name ASC
+    </select>
+
+    <select id="findWeakWords" resultMap="wordResultMap">
+        SELECT <include refid="wordColumns"/>
+        FROM words
+        WHERE quiz_enabled = TRUE
+        ORDER BY wrong_count DESC, updated_at DESC, term ASC
+        LIMIT #{limit}
+    </select>
+
+    <select id="findById" resultMap="wordResultMap">
+        SELECT <include refid="wordColumns"/>
+        FROM words
+        WHERE id = #{id}
     </select>
 
     <update id="incrementWrongCount">
         UPDATE words
         SET wrong_count = wrong_count + 1,
             status = '要復習',
-            last_reviewed_on = CURRENT_DATE
+            last_reviewed_on = CURRENT_DATE,
+            last_reviewed_at = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <update id="markCorrect">
+        UPDATE words
+        SET last_reviewed_on = CURRENT_DATE,
+            last_reviewed_at = CURRENT_TIMESTAMP,
+            last_correct_at = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <update id="touchReview">
+        UPDATE words
+        SET last_reviewed_on = CURRENT_DATE,
+            last_reviewed_at = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateQuizEnabledByIds">
+        UPDATE words
+        SET quiz_enabled = #{quizEnabled},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <update id="updateQuizEnabledById">
+        UPDATE words
+        SET quiz_enabled = #{quizEnabled},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <select id="findMinorStudySignals" resultType="com.example.demo.model.MinorStudySignal">
+        SELECT minor_name,
+               SUM(COALESCE(wrong_count, 0)) AS wrong_count_total,
+               SUM(CASE
+                   WHEN last_reviewed_at IS NULL THEN 1
+                   WHEN DATEDIFF('DAY', CAST(last_reviewed_at AS DATE), CURRENT_DATE) &gt;= 1 THEN 1
+                   ELSE 0
+               END) AS due_review_count
+        FROM words
+        WHERE quiz_enabled = TRUE
+        GROUP BY minor_name
+    </select>
+
+    <select id="findForgettingReminderItems" resultType="com.example.demo.model.ForgettingReminderItem">
+        SELECT id AS word_id,
+               term,
+               minor_name,
+               CASE
+                   WHEN last_reviewed_at IS NULL THEN 999
+                   ELSE DATEDIFF('DAY', CAST(last_reviewed_at AS DATE), CURRENT_DATE)
+               END AS days_from_last_review
+        FROM words
+        WHERE quiz_enabled = TRUE
+          AND (
+              last_reviewed_at IS NULL
+              OR DATEDIFF('DAY', CAST(last_reviewed_at AS DATE), CURRENT_DATE) IN (1, 3, 7)
+              OR DATEDIFF('DAY', CAST(last_reviewed_at AS DATE), CURRENT_DATE) &gt; 7
+          )
+        ORDER BY days_from_last_review DESC, wrong_count DESC, term ASC
+        LIMIT #{limit}
+    </select>
+
+    <update id="updateById" parameterType="Word">
+        UPDATE words
+        SET term = #{term},
+            meaning = #{meaning},
+            minor_name = #{minorName},
+            status = #{status},
+            wrong_count = COALESCE(#{wrongCount}, 0),
+            quiz_enabled = COALESCE(#{quizEnabled}, TRUE),
+            updated_at = CURRENT_TIMESTAMP
         WHERE id = #{id}
     </update>
 
     <insert id="upsert" parameterType="Word">
         MERGE INTO words (
-            term, meaning, field_name, major_name, minor_name, status, wrong_count, last_reviewed_on
+            term, meaning, field_name, major_name, minor_name, status, wrong_count, quiz_enabled,
+            choice1, choice2, choice3, choice4, answer_index, last_reviewed_on, last_reviewed_at,
+            last_correct_at, priority, updated_at
         ) KEY (term)
         VALUES (
             #{term},
@@ -64,7 +197,17 @@
             #{minorName},
             COALESCE(#{status}, '学習中'),
             COALESCE(#{wrongCount}, 0),
-            #{lastReviewedOn}
+            COALESCE(#{quizEnabled}, TRUE),
+            #{choice1},
+            #{choice2},
+            #{choice3},
+            #{choice4},
+            #{answerIndex},
+            #{lastReviewedOn},
+            #{lastReviewedAt},
+            #{lastCorrectAt},
+            COALESCE(#{priority}, 0),
+            CURRENT_TIMESTAMP
         )
     </insert>
 

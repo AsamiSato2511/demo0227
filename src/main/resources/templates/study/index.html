@@ -1,201 +1,150 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ja" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ITパスポート合格分析ダッシュボード</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <th:block th:replace="~{fragments/layout :: commonHead('ITパスポート合格支援ダッシュボード')}"></th:block>
     <style>
-        .kpi-card { border: 0; border-radius: 16px; }
-        .kpi-value { font-size: 2rem; font-weight: 700; }
-        .trend-up { color: #198754; font-weight: 700; }
-        .trend-down { color: #dc3545; font-weight: 700; }
-        .gauge-wrap { height: 14px; border-radius: 20px; overflow: hidden; background: #e9ecef; }
-        .section-title { font-weight: 700; }
+        .dense-page { padding: .45rem .5rem .6rem; }
+        .dense-header { display:flex; justify-content:space-between; align-items:center; gap:.5rem; margin-bottom:.45rem; }
+        .dense-title { margin:0; font-size:1.28rem; font-weight:700; letter-spacing:-.01em; }
+        .dense-grid { display:grid; gap:.35rem; }
+        .top-grid { grid-template-columns: 1.25fr .75fr; }
+        .mid-grid { grid-template-columns: 1fr 1fr; }
+        .panel { background:#fff; border:1px solid #e2e8f0; border-radius:.6rem; padding:.45rem .5rem; }
+        .panel h2 { margin:0 0 .35rem; font-size:.84rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:#334155; }
+        .task-item, .weak-item { display:flex; justify-content:space-between; align-items:center; gap:.4rem; padding:.3rem .35rem; border:1px solid #e2e8f0; border-radius:.45rem; margin-bottom:.25rem; }
+        .task-item:last-child, .weak-item:last-child { margin-bottom:0; }
+        .name { font-size:.86rem; font-weight:600; color:#0f172a; }
+        .meta { font-size:.73rem; color:#64748b; }
+        .btn-mini { border:1px solid #cbd5e1; background:#fff; color:#334155; border-radius:.4rem; padding:.22rem .42rem; font-size:.72rem; text-decoration:none; display:inline-flex; align-items:center; }
+        .btn-mini.primary { background:#2563eb; border-color:#2563eb; color:#fff; }
+        .kpi-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.3rem; }
+        .kpi { border:1px solid #e2e8f0; border-radius:.45rem; padding:.3rem .4rem; }
+        .kpi .k { font-size:.64rem; color:#64748b; text-transform:uppercase; letter-spacing:.06em; }
+        .kpi .v { font-size:1.02rem; font-weight:700; line-height:1.1; color:#0f172a; }
+        .progress-wrap { margin-top:.35rem; }
+        .progress-label { display:flex; justify-content:space-between; font-size:.7rem; color:#64748b; margin-bottom:.12rem; }
+        .progress-bar { height:8px; width:100%; background:#e2e8f0; border-radius:999px; overflow:hidden; }
+        .progress-fill { height:100%; border-radius:999px; }
+        .chip { display:inline-flex; align-items:center; border-radius:999px; padding:.08rem .42rem; font-size:.68rem; font-weight:700; }
+        .chip.danger { background:#fee2e2; color:#991b1b; }
+        .chip.warn { background:#fef3c7; color:#92400e; }
+        .chip.ok { background:#dcfce7; color:#166534; }
+        .mini-list { margin:0; padding-left:.95rem; }
+        .mini-list li { font-size:.76rem; color:#475569; margin-bottom:.12rem; }
+        .mini-list li:last-child { margin-bottom:0; }
+        .foot-row { display:grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap:.35rem; margin-top:.45rem; }
+        .foot-cell { border:1px solid #e2e8f0; border-radius:.45rem; padding:.26rem .34rem; background:#f8fafc; }
+        .foot-cell .k { font-size:.62rem; color:#64748b; text-transform:uppercase; }
+        .foot-cell .v { font-size:.74rem; color:#0f172a; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .tool-row { display:flex; gap:.3rem; flex-wrap:wrap; margin-top:.35rem; }
+        .tool-inline { display:flex; gap:.25rem; align-items:center; }
+        .tool-inline input[type='date'] { height:28px; font-size:.74rem; padding:.15rem .3rem; }
+        .tool-inline input[type='file'] { font-size:.72rem; max-width:210px; }
+        @media (max-width: 1100px) { .foot-row { grid-template-columns: repeat(3,minmax(0,1fr)); } }
+        @media (max-width: 920px) {
+            .top-grid, .mid-grid { grid-template-columns:1fr; }
+            .foot-row { grid-template-columns: repeat(2,minmax(0,1fr)); }
+            .dense-page { padding:.4rem .45rem .55rem; }
+        }
+        @media (max-width: 560px) {
+            .foot-row { grid-template-columns:1fr; }
+            .dense-title { font-size:1.08rem; }
+        }
     </style>
 </head>
-<body class="bg-light">
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="h3 mb-0">ITパスポート合格分析ダッシュボード</h1>
-        <a class="btn btn-outline-success" th:href="@{/words}">単語帳</a>
+<body>
+<div class="page-wrap dense-page">
+    <div class="dense-header">
+        <h1 class="dense-title">ITパスポート合格支援ダッシュボード</h1>
+        <a class="btn-mini" th:href="@{/words}">単語帳</a>
     </div>
 
-    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}">success</div>
-    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}">error</div>
+    <th:block th:replace="~{fragments/layout :: flash(${successMessage}, ${errorMessage})}"></th:block>
 
-    <div class="row g-3 mb-4">
-        <div class="col-12 col-lg-8">
-            <div class="card shadow-sm kpi-card">
-                <div class="card-body">
-                    <h2 class="h5 section-title mb-3">現在地</h2>
-                    <div class="row g-3">
-                        <div class="col-6 col-md-3">
-                            <div class="text-muted small">最新模試点数</div>
-                            <div class="kpi-value" th:text="${latestScore}">0</div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="text-muted small">合格ライン</div>
-                            <div class="kpi-value" th:text="${passLine}">70</div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="text-muted small">合格まで</div>
-                            <div class="kpi-value" th:text="${remainToPass + '点'}">0点</div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="text-muted small">試験まで</div>
-                            <div class="kpi-value" th:text="${daysUntilExam + '日'}">0日</div>
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <div class="d-flex justify-content-between small mb-1">
-                            <span>合格進捗</span>
-                            <span th:text="${latestScore + ' / ' + passLine}">0 / 70</span>
-                        </div>
-                        <div class="gauge-wrap">
-                            <div th:style="'width:' + ${progressPercent} + '%;background:' + ${progressColor} + ';height:100%;'"></div>
-                        </div>
-                        <div class="small mt-2">
-                            <span>前回比：</span>
-                            <span th:class="${previousDiff >= 0 ? 'trend-up' : 'trend-down'}"
-                                  th:text="${previousDiff >= 0 ? '+' + previousDiff + '点' : previousDiff + '点'}">+0点</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-12 col-lg-4">
-            <div class="card shadow-sm kpi-card h-100">
-                <div class="card-body">
-                    <h2 class="h6 section-title mb-3">合格確率予測（直近3回）</h2>
-                    <div class="mb-2">
-                        <div class="text-muted small">合格確率</div>
-                        <div class="kpi-value" th:text="${forecast.passProbability + '%'}">0%</div>
-                    </div>
+    <div class="dense-grid top-grid">
+        <section class="panel">
+            <h2>今日やること</h2>
+            <div th:if="${#lists.isEmpty(priorityLearnings)}" class="meta">優先学習候補がありません。</div>
+            <div th:if="${!#lists.isEmpty(priorityLearnings)}">
+                <div class="task-item" th:each="p, s : ${priorityLearnings}" th:if="${s.index < 3}">
                     <div>
-                        <div class="text-muted small">次回予測点</div>
-                        <div class="h4 mb-0" th:text="${forecast.predictedScore + '点'}">0点</div>
+                        <div class="name" th:text="${p.minorName}">minor</div>
+                        <div class="meta" th:text="${'正答率 ' + p.correctRate + '% / 誤答 ' + p.recentWrongCount + '件'}">meta</div>
                     </div>
+                    <a class="btn-mini primary" th:href="@{/words/quiz(minorName=${p.minorName})}">学習</a>
                 </div>
             </div>
-        </div>
+            <ul class="mini-list" th:if="${!#lists.isEmpty(adviceLines)}" style="margin-top:.3rem;">
+                <li th:each="line, stat : ${adviceLines}" th:if="${stat.index < 2}" th:text="${line}">advice</li>
+            </ul>
+        </section>
+
+        <section class="panel">
+            <h2>進捗サマリー</h2>
+            <div class="kpi-grid">
+                <div class="kpi"><div class="k">最新得点</div><div class="v" th:text="${latestScore + '点'}">0点</div></div>
+                <div class="kpi"><div class="k">合格まで</div><div class="v" th:text="${remainToPass + '点'}">0点</div></div>
+                <div class="kpi"><div class="k">合格確率</div><div class="v" th:text="${forecast.passProbability + '%'}">0%</div></div>
+                <div class="kpi"><div class="k">試験まで</div><div class="v" th:text="${daysUntilExam + '日'}">0日</div></div>
+            </div>
+            <div class="progress-wrap">
+                <div class="progress-label"><span>到達度</span><span th:text="${latestScore + '/' + passLine}">0/70</span></div>
+                <div class="progress-bar"><div class="progress-fill" th:style="'width:' + ${progressPercent} + '%;background:' + ${progressColor}"></div></div>
+            </div>
+            <div class="meta" style="margin-top:.24rem;">前回比:
+                <span th:style="${previousDiff >= 0} ? 'color:#16a34a;font-weight:700;' : 'color:#dc2626;font-weight:700;'"
+                      th:text="${previousDiff >= 0 ? '+' + previousDiff + '点' : previousDiff + '点'}">+0点</span>
+            </div>
+        </section>
     </div>
 
-    <div class="row g-4 mb-4">
-        <div class="col-12 col-lg-8">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h2 class="h5 section-title mb-3">結果推移</h2>
-                    <canvas id="scoreTrendChart" height="95"></canvas>
-                </div>
-            </div>
-        </div>
-        <div class="col-12 col-lg-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h2 class="h5 section-title mb-3">AIアドバイス</h2>
-                    <ul class="mb-0">
-                        <li th:each="line : ${adviceLines}" th:text="${line}">アドバイス</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row g-4 mb-4">
-        <div class="col-12 col-lg-7">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h2 class="h5 section-title mb-3">分野別インパクト分析（+10%改善時）</h2>
-                    <table class="table table-sm table-striped mb-0">
-                        <thead>
-                        <tr>
-                            <th>分野</th>
-                            <th class="text-end">現在正答率</th>
-                            <th class="text-end">出題比率</th>
-                            <th class="text-end">得点インパクト</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr th:if="${#lists.isEmpty(fieldImpacts)}">
-                            <td colspan="4" class="text-center text-muted">分析データがありません</td>
-                        </tr>
-                        <tr th:each="impact : ${fieldImpacts}">
-                            <td th:text="${impact.fieldName}">分野</td>
-                            <td class="text-end" th:text="${impact.accuracyRate + '%'}">0%</td>
-                            <td class="text-end" th:text="${impact.weightPercent + '%'}">0%</td>
-                            <td class="text-end fw-semibold" th:text="'+ ' + ${impact.gainPointsForPlus10Rate} + '点'">+0点</td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        <div class="col-12 col-lg-5">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h2 class="h5 section-title mb-3">ボトルネック分野 Top3</h2>
-                    <table class="table table-sm table-striped mb-0">
-                        <thead>
-                        <tr>
-                            <th>分野</th>
-                            <th class="text-end">正答率</th>
-                            <th class="text-end">正解/総数</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr th:if="${#lists.isEmpty(bottleneckTop3)}">
-                            <td colspan="3" class="text-center text-muted">データがありません</td>
-                        </tr>
-                        <tr th:each="row : ${bottleneckTop3}">
-                            <td th:text="${row.name}">分野</td>
-                            <td class="text-end text-danger fw-semibold" th:text="${row.correctRate + '%'}">0%</td>
-                            <td class="text-end" th:text="${row.correctCount + '/' + row.totalCount}">0/0</td>
-                        </tr>
-                        </tbody>
-                    </table>
-                    <div class="mt-3">
-                        <div class="small text-muted mb-1">弱点連動の単語クイズ</div>
-                        <div class="d-flex flex-wrap gap-2">
-                            <a th:each="minor : ${weakMinorNames}" class="btn btn-sm btn-outline-success"
-                               th:href="@{/words/quiz(minorName=${minor}, batch=${batch})}" th:text="${minor}">中分類</a>
-                        </div>
+    <div class="dense-grid mid-grid" style="margin-top:.45rem;">
+        <section class="panel">
+            <h2>弱点TOP</h2>
+            <div th:if="${#lists.isEmpty(bottleneckTop3)}" class="meta">弱点データがありません。</div>
+            <div th:if="${!#lists.isEmpty(bottleneckTop3)}">
+                <div class="weak-item" th:each="row : ${bottleneckTop3}">
+                    <div>
+                        <div class="name" th:text="${row.name}">name</div>
+                        <span class="chip danger" th:text="${row.correctRate + '%'}">0%</span>
                     </div>
+                    <a class="btn-mini" th:href="@{/words/quiz(minorName=${row.name})}">10問</a>
                 </div>
             </div>
-        </div>
+        </section>
+
+        <section class="panel">
+            <h2>次に着手する項目</h2>
+            <div th:if="${#lists.isEmpty(weakWords)}" class="meta">候補がありません。</div>
+            <div th:if="${!#lists.isEmpty(weakWords)}">
+                <div class="weak-item" th:each="w, s : ${weakWords}" th:if="${s.index < 3}">
+                    <div>
+                        <div class="name" th:text="${w.term}">term</div>
+                        <div class="meta" th:text="${w.minorName + ' / 誤答 ' + w.wrongCount}">meta</div>
+                    </div>
+                    <a class="btn-mini primary" th:href="@{/words/quiz(minorName=${w.minorName})}">復習</a>
+                </div>
+            </div>
+        </section>
     </div>
 
-    <div class="row g-4">
-        <div class="col-12 col-md-8">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h2 class="h5 section-title mb-3">過去問CSV取込</h2>
-                    <form th:action="@{/study/import}" method="post" enctype="multipart/form-data" class="row g-2 align-items-end">
-                        <div class="col-md-8">
-                            <label class="form-label">CSVファイル</label>
-                            <input type="file" name="file" class="form-control" accept=".csv" required>
-                        </div>
-                        <div class="col-md-4">
-                            <button class="btn btn-primary w-100" type="submit">取込実行</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+    <section class="panel" style="margin-top:.45rem;">
+        <div class="tool-row">
+            <form th:action="@{/study/exam-date}" th:object="${examSettingForm}" method="post" class="tool-inline">
+                <input type="date" th:field="*{examDate}" class="form-control">
+                <button class="btn-mini" type="submit">試験日更新</button>
+            </form>
+            <form th:action="@{/study/import}" method="post" enctype="multipart/form-data" class="tool-inline">
+                <input type="file" name="file" class="form-control" accept=".csv" required>
+                <button class="btn-mini" type="submit">CSV取込</button>
+            </form>
         </div>
-        <div class="col-12 col-md-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h2 class="h6 section-title mb-2">試験日設定</h2>
-                    <form th:action="@{/study/exam-date}" th:object="${examSettingForm}" method="post" class="d-flex gap-2">
-                        <input type="date" th:field="*{examDate}" class="form-control">
-                        <button class="btn btn-outline-primary" type="submit">更新</button>
-                    </form>
-                    <div class="small text-muted mt-3" th:text="${countdownMessage}">試験まであと0日</div>
-                </div>
-            </div>
-        </div>
-    </div>
+    </section>
+
+    <section class="panel" style="margin-top:.45rem;">
+        <h2>得点推移</h2>
+        <canvas id="scoreTrendChart" height="86"></canvas>
+    </section>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
@@ -207,23 +156,24 @@
     const ctx = document.getElementById('scoreTrendChart');
     if (ctx && labels.length > 0) {
         new Chart(ctx, {
-            type: 'bar',
+            type: 'line',
             data: {
-                labels: labels,
+                labels,
                 datasets: [
                     {
-                        label: '得点',
+                        label: 'Score',
                         data: scores,
-                        backgroundColor: 'rgba(13,110,253,0.55)',
-                        borderColor: '#0d6efd',
-                        borderWidth: 1
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37,99,235,0.16)',
+                        fill: true,
+                        tension: .25,
+                        pointRadius: 1.8
                     },
                     {
-                        type: 'line',
-                        label: '合格ライン',
+                        label: 'Pass',
                         data: passLineArray,
-                        borderColor: '#dc3545',
-                        borderDash: [6, 6],
+                        borderColor: '#dc2626',
+                        borderDash: [4, 4],
                         pointRadius: 0,
                         tension: 0
                     }
@@ -231,9 +181,10 @@
             },
             options: {
                 responsive: true,
-                plugins: { legend: { position: 'bottom' } },
+                plugins: { legend: { display: false } },
                 scales: {
-                    y: { min: 0, max: 100, ticks: { stepSize: 10 } }
+                    y: { min: 0, max: 100, ticks: { stepSize: 20 } },
+                    x: { ticks: { maxTicksLimit: 6 } }
                 }
             }
         });

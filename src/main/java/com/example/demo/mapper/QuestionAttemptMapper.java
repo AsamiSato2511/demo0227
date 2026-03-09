@@ -2,7 +2,9 @@ package com.example.demo.mapper;
 
 import com.example.demo.model.CorrectRateSummary;
 import com.example.demo.model.CategoryRateRow;
+import com.example.demo.model.ExamResult;
 import com.example.demo.model.ImportBatchSummary;
+import com.example.demo.model.MinorWrongCount;
 import com.example.demo.model.QuestionAttempt;
 import java.time.LocalDate;
 import java.util.List;
@@ -30,4 +32,10 @@ public interface QuestionAttemptMapper {
     List<QuestionAttempt> findRecent(@Param("fromDate") LocalDate fromDate,
                                      @Param("importBatchId") String importBatchId,
                                      @Param("limit") int limit);
+
+    List<ExamResult> findDailyScores(@Param("importBatchId") String importBatchId,
+                                     @Param("limit") int limit);
+
+    List<MinorWrongCount> findRecentWrongCountsByMinor(@Param("fromDate") LocalDate fromDate,
+                                                       @Param("importBatchId") String importBatchId);
 }

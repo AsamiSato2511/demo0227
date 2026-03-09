@@ -1,84 +1,144 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ja" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>単語帳</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <th:block th:replace="~{fragments/layout :: commonHead('単語帳')}"></th:block>
+    <style>
+        .table-shell { overflow-x: auto; }
+        .star-high { color: #f59e0b; }
+        .star-mid { color: #f59e0b; opacity: .85; }
+        .star-low { color: #94a3b8; }
+        .filter-grid { display: grid; grid-template-columns: 1.4fr repeat(4, minmax(0,1fr)); gap: .7rem; align-items: end; }
+        @media (max-width: 992px) { .filter-grid { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 640px) { .filter-grid { grid-template-columns: 1fr; } }
+    </style>
 </head>
-<body class="bg-light">
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="h3 mb-0">単語帳</h1>
-        <div class="d-flex gap-2">
-            <a class="btn btn-outline-secondary" th:href="@{/study}">ダッシュボード</a>
-            <a class="btn btn-primary" th:href="@{/words/quiz(minorName=${minorName})}">10問クイズ開始</a>
+<body>
+<div class="page-wrap">
+    <div class="section-stack d-flex justify-content-between align-items-center" style="gap:.75rem; flex-wrap:wrap;">
+        <h1 class="page-title">単語帳</h1>
+        <div class="d-flex" style="gap:.5rem; flex-wrap:wrap;">
+            <a class="secondary-button" th:href="@{/study}">ダッシュボードへ</a>
+            <a class="cta-button" th:href="@{/words/quiz(minorName=${minorName})}">10問クイズ</a>
         </div>
     </div>
 
-    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}">success</div>
-    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}">error</div>
+    <th:block th:replace="~{fragments/layout :: flash(${successMessage}, ${errorMessage})}"></th:block>
 
-    <div class="card shadow-sm mb-3">
-        <div class="card-body">
-            <h2 class="h6 mb-2">単語CSV取込</h2>
+    <section class="dashboard-card section-stack" style="background:var(--bg-muted);">
+        <button class="secondary-button" type="button" data-bs-toggle="collapse" data-bs-target="#csvImportPanel" aria-expanded="false" aria-controls="csvImportPanel">
+            ▼ CSV取込
+        </button>
+        <div class="collapse" id="csvImportPanel" style="margin-top:1rem;">
+            <div style="font-size:.83rem;margin-bottom:.45rem;color:var(--text-sub);">CSVフォーマット（UTF-8 / ヘッダあり）</div>
+            <code style="font-size:.8rem;display:block;background:#fff;border:1px solid var(--border-default);padding:.5rem;border-radius:.55rem;">term,meaning,choice1,choice2,choice3,choice4,answer,minor_name,status,wrong_count</code>
+            <p style="font-size:.82rem;color:var(--text-sub);margin:.6rem 0;">statusは「要復習」または「学習中」。同じtermは重複登録されず上書きされます。</p>
+            <a class="table-action-button" th:href="@{/words/import/sample}" style="margin-bottom:.8rem;">サンプルCSVダウンロード</a>
             <form th:action="@{/words/import}" method="post" enctype="multipart/form-data" class="row g-2 align-items-end">
                 <div class="col-md-8">
-                    <label class="form-label">CSVファイル（term,meaning,minor_name,status,wrong_count）</label>
+                    <label class="metric-label">CSVファイル</label>
                     <input type="file" name="file" class="form-control" accept=".csv" required>
                 </div>
                 <div class="col-md-4">
-                    <button class="btn btn-success w-100" type="submit">取り込む</button>
+                    <button class="cta-button" style="width:100%;" type="submit">取り込む</button>
                 </div>
             </form>
         </div>
-    </div>
+    </section>
 
-    <form th:action="@{/words}" method="get" class="row g-2 mb-3">
-        <div class="col-md-4">
-            <input class="form-control" type="text" name="keyword" th:value="${keyword}" placeholder="キーワード">
+    <section class="dashboard-card section-stack">
+        <form th:action="@{/words}" method="get" class="filter-grid">
+            <div>
+                <label class="metric-label">検索</label>
+                <input class="form-control" type="text" name="keyword" th:value="${keyword}" placeholder="用語 or 解説">
+            </div>
+            <div>
+                <label class="metric-label">中分類</label>
+                <select name="minorName" class="form-select">
+                    <option value="">すべて</option>
+                    <option th:each="m : ${minorNames}" th:value="${m}" th:text="${m}" th:selected="${m == minorName}">中分類</option>
+                </select>
+            </div>
+            <div>
+                <label class="metric-label">学習ステータス</label>
+                <select name="status" class="form-select">
+                    <option value="all" th:selected="${status == 'all'}">すべて</option>
+                    <option value="学習中" th:selected="${status == '学習中'}">学習中</option>
+                    <option value="要復習" th:selected="${status == '要復習'}">要復習</option>
+                </select>
+            </div>
+            <div>
+                <label class="metric-label">重要度</label>
+                <select name="importance" class="form-select">
+                    <option value="all" th:selected="${importance == 'all'}">すべて</option>
+                    <option value="high" th:selected="${importance == 'high'}">★★★</option>
+                    <option value="mid" th:selected="${importance == 'mid'}">★★</option>
+                    <option value="low" th:selected="${importance == 'low'}">★</option>
+                </select>
+            </div>
+            <div>
+                <button class="secondary-button" style="width:100%;" type="submit">絞り込み</button>
+            </div>
+        </form>
+    </section>
+
+    <form th:action="@{/words/quiz-exclude}" method="post">
+        <input type="hidden" name="keyword" th:value="${keyword}">
+        <input type="hidden" name="minorName" th:value="${minorName}">
+        <input type="hidden" name="status" th:value="${status}">
+        <input type="hidden" name="importance" th:value="${importance}">
+
+        <div class="section-stack d-flex justify-content-end">
+            <button class="table-action-button" type="submit" style="border-color:#fecaca;color:#991b1b;background:#fff1f2;">選択した単語を対象外</button>
         </div>
-        <div class="col-md-4">
-            <input class="form-control" type="text" name="minorName" th:value="${minorName}" placeholder="中分類">
-        </div>
-        <div class="col-md-2">
-            <select name="status" class="form-select">
-                <option value="all" th:selected="${status == 'all'}">すべて</option>
-                <option value="学習中" th:selected="${status == '学習中'}">学習中</option>
-                <option value="習得" th:selected="${status == '習得'}">習得</option>
-                <option value="要復習" th:selected="${status == '要復習'}">要復習</option>
-            </select>
-        </div>
-        <div class="col-md-2">
-            <button class="btn btn-outline-primary w-100" type="submit">絞り込み</button>
-        </div>
+
+        <section class="dashboard-card table-shell">
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th style="width:44px;"></th>
+                    <th>用語</th>
+                    <th>解説</th>
+                    <th>中分類</th>
+                    <th>重要度</th>
+                    <th style="text-align:right;">誤答</th>
+                    <th>クイズ対象</th>
+                    <th>編集</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(words)}">
+                    <td colspan="8" style="text-align:center;color:var(--text-sub);padding:1rem;">単語がありません</td>
+                </tr>
+                <tr th:each="w : ${words}">
+                    <td><input class="form-check-input" type="checkbox" name="selectedWordIds" th:value="${w.id}"></td>
+                    <td style="font-weight:600;" th:text="${w.term}">term</td>
+                    <td style="color:var(--text-sub);" th:text="${w.meaning}">meaning</td>
+                    <td th:text="${w.minorName}">minor</td>
+                    <td>
+                        <span th:if="${w.wrongCount >= 5}" class="pill-badge chip-danger star-high">★★★</span>
+                        <span th:if="${w.wrongCount >= 2 and w.wrongCount < 5}" class="pill-badge chip-warning star-mid">★★</span>
+                        <span th:if="${w.wrongCount < 2}" class="pill-badge chip-neutral star-low">★</span>
+                    </td>
+                    <td style="text-align:right;"><span class="status-chip chip-neutral" th:text="${w.wrongCount}">0</span></td>
+                    <td>
+                        <form th:action="@{/words/{id}/quiz-enabled(id=${w.id})}" method="post" class="d-inline">
+                            <input type="hidden" name="keyword" th:value="${keyword}">
+                            <input type="hidden" name="minorName" th:value="${minorName}">
+                            <input type="hidden" name="status" th:value="${status}">
+                            <input type="hidden" name="importance" th:value="${importance}">
+                            <input type="hidden" name="enabled" th:value="${!w.quizEnabled}">
+                            <button type="submit" class="table-action-button" th:classappend="${w.quizEnabled} ? ' chip-success' : ' chip-neutral'"
+                                    th:text="${w.quizEnabled} ? 'ON' : 'OFF'">ON</button>
+                        </form>
+                    </td>
+                    <td><a class="table-action-button" th:href="@{/words/{id}/edit(id=${w.id})}">編集</a></td>
+                </tr>
+                </tbody>
+            </table>
+        </section>
     </form>
-
-    <div class="table-responsive bg-white rounded shadow-sm">
-        <table class="table table-striped mb-0">
-            <thead>
-            <tr>
-                <th>用語</th>
-                <th>意味</th>
-                <th>中分類</th>
-                <th>状態</th>
-                <th>誤答回数</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:if="${#lists.isEmpty(words)}">
-                <td colspan="5" class="text-center text-muted">単語がありません</td>
-            </tr>
-            <tr th:each="w : ${words}">
-                <td th:text="${w.term}">term</td>
-                <td th:text="${w.meaning}">meaning</td>
-                <td th:text="${w.minorName}">minor</td>
-                <td th:text="${w.status}">学習中</td>
-                <td th:text="${w.wrongCount}">0</td>
-            </tr>
-            </tbody>
-        </table>
-    </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

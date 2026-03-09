@@ -1,15 +1,22 @@
-package com.example.demo.service;
+﻿package com.example.demo.service;
 
 import com.example.demo.mapper.ExamResultMapper;
 import com.example.demo.mapper.ExamSettingMapper;
+import com.example.demo.mapper.LearningLogMapper;
 import com.example.demo.mapper.QuestionAttemptMapper;
 import com.example.demo.mapper.SubjectMapper;
+import com.example.demo.mapper.WordMapper;
 import com.example.demo.model.CorrectRateSummary;
 import com.example.demo.model.ExamResult;
 import com.example.demo.model.ExamSetting;
+import com.example.demo.model.ForgettingReminderItem;
 import com.example.demo.model.ImportBatchSummary;
+import com.example.demo.model.LearningHeatmapCell;
+import com.example.demo.model.MinorStudySignal;
+import com.example.demo.model.MinorWrongCount;
+import com.example.demo.model.PriorityLearningItem;
 import com.example.demo.model.QuestionAttempt;
-import com.example.demo.model.Subject;
+import com.example.demo.model.Word;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
@@ -47,15 +54,21 @@ public class StudyService {
     private final ExamResultMapper examResultMapper;
     private final QuestionAttemptMapper questionAttemptMapper;
     private final SubjectMapper subjectMapper;
+    private final WordMapper wordMapper;
+    private final LearningLogMapper learningLogMapper;
 
     public StudyService(ExamSettingMapper examSettingMapper,
                         ExamResultMapper examResultMapper,
                         QuestionAttemptMapper questionAttemptMapper,
-                        SubjectMapper subjectMapper) {
+                        SubjectMapper subjectMapper,
+                        WordMapper wordMapper,
+                        LearningLogMapper learningLogMapper) {
         this.examSettingMapper = examSettingMapper;
         this.examResultMapper = examResultMapper;
         this.questionAttemptMapper = questionAttemptMapper;
         this.subjectMapper = subjectMapper;
+        this.wordMapper = wordMapper;
+        this.learningLogMapper = learningLogMapper;
     }
 
     public ExamSetting getExamSetting() {
@@ -78,7 +91,7 @@ public class StudyService {
 
     public String buildCountdownMessage(long days) {
         if (days > 0) {
-            return "試験まであと " + days + " 日";
+            return "試験日まであと " + days + " 日";
         }
         if (days == 0) {
             return "今日は試験日です";
@@ -95,14 +108,6 @@ public class StudyService {
             return Collections.emptyList();
         }
         return examResultMapper.findRecent(limit);
-    }
-
-    public Map<String, Object> findResultStats() {
-        return examResultMapper.findStats();
-    }
-
-    public void createResult(ExamResult examResult) {
-        examResultMapper.insert(examResult);
     }
 
     public int importQuestionAttempts(MultipartFile file) throws IOException {
@@ -150,8 +155,18 @@ public class StudyService {
         }
 
         questionAttemptMapper.insertBatch(items);
+        persistDailyScoresForBatch(batchId, items.size());
         syncSubjectsFromAttempts(items);
         return items.size();
+    }
+
+    private void persistDailyScoresForBatch(String batchId, int limit) {
+        List<ExamResult> dailyScores = questionAttemptMapper.findDailyScores(batchId, Math.max(1, limit));
+        for (ExamResult score : dailyScores) {
+            score.setSource("CSV Import");
+            score.setMemo("importBatchId=" + batchId);
+            examResultMapper.insert(score);
+        }
     }
 
     public List<CorrectRateSummary> findFieldRates(String importBatchId) {
@@ -179,6 +194,10 @@ public class StudyService {
         return result;
     }
 
+    public List<Word> findWeakWords(int limit) {
+        return wordMapper.findWeakWords(limit);
+    }
+
     public List<FieldImpact> calculateFieldImpacts(String importBatchId) {
         List<CorrectRateSummary> fieldRates = findFieldRates(importBatchId);
         long totalQuestions = fieldRates.stream()
@@ -199,6 +218,64 @@ public class StudyService {
         }
         impacts.sort(Comparator.comparing(FieldImpact::getGainPointsForPlus10Rate).reversed());
         return impacts;
+    }
+
+    public List<PriorityLearningItem> findTodayPriorityLearnings(String importBatchId, long daysUntilExam) {
+        List<CorrectRateSummary> minorRates = findMinorRates(importBatchId);
+        Map<String, CorrectRateSummary> rateMap = new HashMap<>();
+        for (CorrectRateSummary row : minorRates) {
+            if (row.getName() != null && !row.getName().isBlank()) {
+                rateMap.put(row.getName(), row);
+            }
+        }
+
+        Map<String, Long> recentWrongMap = new HashMap<>();
+        for (MinorWrongCount row : questionAttemptMapper.findRecentWrongCountsByMinor(LocalDate.now().minusDays(14), normalizeBatch(importBatchId))) {
+            recentWrongMap.put(row.getMinorName(), row.getWrongCount() != null ? row.getWrongCount() : 0L);
+        }
+
+        Map<String, MinorStudySignal> signalMap = new HashMap<>();
+        for (MinorStudySignal signal : wordMapper.findMinorStudySignals()) {
+            signalMap.put(signal.getMinorName(), signal);
+        }
+
+        Set<String> allMinors = new HashSet<>();
+        allMinors.addAll(rateMap.keySet());
+        allMinors.addAll(signalMap.keySet());
+
+        double urgencyFactor = daysUntilExam <= 14 ? 1.25 : (daysUntilExam <= 30 ? 1.10 : 1.0);
+        List<PriorityLearningItem> items = new ArrayList<>();
+        for (String minor : allMinors) {
+            CorrectRateSummary rate = rateMap.get(minor);
+            MinorStudySignal signal = signalMap.get(minor);
+
+            double correctRate = rate != null && rate.getCorrectRate() != null ? rate.getCorrectRate() : 50.0;
+            long questionCount = rate != null && rate.getTotalCount() != null ? rate.getTotalCount() : 0L;
+            long recentWrong = recentWrongMap.getOrDefault(minor, 0L);
+            long wrongCount = signal != null && signal.getWrongCountTotal() != null ? signal.getWrongCountTotal() : 0L;
+            long dueReviewCount = signal != null && signal.getDueReviewCount() != null ? signal.getDueReviewCount() : 0L;
+
+            double score = ((100.0 - correctRate) * 0.45
+                    + Math.log1p(questionCount) * 8.0
+                    + recentWrong * 8.0
+                    + wrongCount * 0.9
+                    + dueReviewCount * 4.0) * urgencyFactor;
+
+            items.add(new PriorityLearningItem(minor, round1(correctRate), questionCount, recentWrong, wrongCount, dueReviewCount, round1(score)));
+        }
+
+        items.sort(Comparator.comparing(PriorityLearningItem::getPriorityScore).reversed());
+        return items.size() > 3 ? items.subList(0, 3) : items;
+    }
+
+    public List<ForgettingReminderItem> findForgettingReminders(int limit) {
+        return wordMapper.findForgettingReminderItems(limit);
+    }
+
+    public List<LearningHeatmapCell> findLearningHeatmap(int days) {
+        LocalDate to = LocalDate.now();
+        LocalDate from = to.minusDays(Math.max(1, days) - 1L);
+        return learningLogMapper.findDailyCounts(from, to);
     }
 
     public PassForecast calculatePassForecast(List<ExamResult> recentDesc) {
@@ -244,9 +321,9 @@ public class StudyService {
     private void syncSubjectsFromAttempts(List<QuestionAttempt> items) {
         Set<String> seen = new HashSet<>();
         Map<String, String> colorMap = new HashMap<>();
-        colorMap.put("ストラテジ", "#fd7e14");
-        colorMap.put("マネジメント", "#0d6efd");
-        colorMap.put("テクノロジ", "#198754");
+        colorMap.put("Strategy", "#fd7e14");
+        colorMap.put("Management", "#0d6efd");
+        colorMap.put("Technology", "#198754");
 
         for (QuestionAttempt item : items) {
             String key = item.getFieldName() + "|" + item.getMajorName() + "|" + item.getMinorName();

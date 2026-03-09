@@ -11,9 +11,9 @@
     </select>
 
     <update id="updateExamDate">
-        UPDATE exam_settings
-        SET exam_date = #{examDate}
-        WHERE id = 1
+        MERGE INTO exam_settings (id, exam_date)
+        KEY (id)
+        VALUES (1, #{examDate})
     </update>
 
 </mapper>
